@@ -1,0 +1,37 @@
+\section{背景}
+
+\subsection{検知条件とCPE適用条件}
+
+NVDの各CVEエントリは \texttt{configurations} に0個以上のCPE適用文を持つ．
+各適用文は \texttt{cpeMatch} の集合であり，\texttt{criteria} にCPE 2.3形式の文字列，任意で \texttt{versionStartIncluding} / \texttt{versionEndExcluding} 等の範囲指定を持つ．
+スキャナはインベントリ中の製品とバージョンがこの条件を満たすかで検知を行う．
+
+ただし\textbf{CPE適用条件が存在することとバージョンを特定できることは同じではない}．
+バージョン部が \texttt{*}（全バージョン）や \texttt{-}（指定なし）で範囲指定を伴わない場合，その条件は製品全体を影響対象とみなすことしか表現できない．
+この区別は4.4節で定量化する．
+
+\subsection{NVDの解析体制の変化とVulnCheck NVD++}
+
+NVDはCVEエントリの処理状況を \texttt{vulnStatus} として公開している\cite{nvd-status}．
+公式定義によれば \texttt{Awaiting Analysis} は「エンリッチメント対象として印が付けられた」状態，\texttt{Deferred} は「現時点でエンリッチメント予定に入っていない．NVDが宣言する対象範囲外か，資源等の事情で優先度が付けられていない」状態である．
+すなわち \texttt{Deferred} は遅延ではなく，\textbf{NVDがエンリッチメントを行わないと明示した状態}である．
+
+VulnCheck NVD++（本稿では \texttt{nist-nvd2} 系列）\cite{vulncheck-nvd2}は，NVDのCVEデータに独自の解析結果を加えて提供する．
+NVD由来の \texttt{configurations} を保持しつつ独自エンリッチメント結果を \texttt{vcConfigurations} および \texttt{vcVulnerableCPEs} に持つため，「NVDが付与していないがVulnCheckは付与している」件数を機械的に切り分けられる．
+
+\subsection{CNAが提供するaffected情報}
+
+NVDのJSON 2.0フィードは，CVEレコードのCNAコンテナ由来の製品情報を \texttt{affected} フィールドとして保持している．
+これはNVD API 2.0スキーマの正式な項目（\texttt{cve\_affected\_1.0.json}）であり，\texttt{vendor}，\texttt{product}，\texttt{packageName}，\texttt{cpes}，\texttt{defaultStatus}，および \texttt{versions[]}（\texttt{version}，\texttt{status}，\texttt{versionType}，\texttt{lessThan}，\texttt{lessThanOrEqual} 等）を持つ．
+情報源ごとに配列要素が分かれ，CNAが記述した内容がほぼそのまま流れてくる．
+
+つまりNVDは，一次データソース由来の製品情報を保持しながら，それをCPE適用条件へ翻訳する工程で詰まっている．
+ただしそのバージョン表記は自然言語であり（例：\texttt{"2.5.1.720 and earlier"}，\texttt{"N/A"}），そのままでは照合に使えない（4.6節）．
+
+\subsection{前提とする我々の基盤}
+
+前稿\cite{nakaoka2025}で提案した fetch / extract / db build の3段構成を本稿でも前提とする．
+fetch段は一次データソースの構造を保った \texttt{vuls-data-raw} 形式を，extract段は共通スキーマ \texttt{vuls-data-extracted} 形式を出力し，いずれもGitで履歴管理される．
+\texttt{vuls-data-extracted} はエコシステム，パッケージ（またはCPE），影響を受けるバージョン範囲（比較演算子とバージョン文字列の解釈方法を明示）を表現できる．
+執筆時点でfetch対象は77系統のベンダ・プロジェクト，196種類のデータソースに及ぶ（前稿時点では141種類）．
+本稿の提案は，この基盤に「HTMLのみで提供される一次データソース」を取り込むための拡張である．

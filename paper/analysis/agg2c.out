@@ -1,0 +1,49 @@
+### cpeMatch granularity, vulnerable matches only, published>=2024
+NVD configurations   : 505834 {'exact': '245251(48.5%)', 'range': '181980(36.0%)', 'na': '77465(15.3%)', 'any': '1138(0.2%)'}
+VulnCheck vcConfigs  : 374082 {'range': '187511(50.1%)', 'exact': '145409(38.9%)', 'na': '39867(10.7%)', 'any': '1295(0.3%)'}
+
+### per-entry best available granularity, published>=2024
+NVD only             : 132928 {'range': '62457(47.0%)', 'none': '45413(34.2%)', 'exact': '22504(16.9%)', 'na': '2269(1.7%)', 'any': '285(0.2%)'}
+NVD + vcConfigs      : 132928 {'range': '79437(59.8%)', 'none': '25806(19.4%)', 'exact': '23946(18.0%)', 'na': '3454(2.6%)', 'any': '285(0.2%)'}
+
+### per-vendor drill-down (published>=2024)
+-- Apache: total=1004
+   by year:  {'2024': 261, '2025': 218, '2026': 525}
+   status :  {'Analyzed': 607, 'Modified': 322, 'Received': 41, 'Deferred': 21, 'Awaiting Analysis': 13}
+   NVD no-CPE=75 (7.5%)  both no-CPE=6 (0.6%)
+   version-identifiable: NVD=91.7%  NVD+vc=98.8%
+   examples w/o any CPE (id, published, status, #affectedSrc): [('CVE-2026-57914', '2026-06-26', 'Deferred', 1), ('CVE-2026-57915', '2026-06-26', 'Deferred', 2), ('CVE-2026-40454', '2026-07-10', 'Deferred', 1), ('CVE-2026-35554', '2026-04-07', 'Awaiting Analysis', 1)]
+-- Apple: total=1843
+   by year:  {'2024': 596, '2025': 730, '2026': 517}
+   status :  {'Modified': 1384, 'Analyzed': 448, 'Awaiting Analysis': 11}
+   NVD no-CPE=11 (0.6%)  both no-CPE=1 (0.1%)
+   version-identifiable: NVD=99.3%  NVD+vc=99.9%
+   examples w/o any CPE (id, published, status, #affectedSrc): [('CVE-2026-43820', '2026-07-23', 'Awaiting Analysis', 1)]
+-- Cisco: total=845
+   by year:  {'2024': 361, '2025': 274, '2026': 210}
+   status :  {'Analyzed': 605, 'Deferred': 127, 'Awaiting Analysis': 62, 'Modified': 47, 'Undergoing Analysis': 4}
+   NVD no-CPE=193 (22.8%)  both no-CPE=35 (4.1%)
+   version-identifiable: NVD=74.7%  NVD+vc=91.7%
+   examples w/o any CPE (id, published, status, #affectedSrc): [('CVE-2019-1815', '2025-03-04', 'Deferred', 1), ('CVE-2021-1285', '2024-11-18', 'Deferred', 1), ('CVE-2024-20371', '2024-11-06', 'Deferred', 2), ('CVE-2025-20271', '2025-06-18', 'Deferred', 1)]
+-- Fortinet: total=450
+   by year:  {'2024': 121, '2025': 237, '2026': 92}
+   status :  {'Analyzed': 323, 'Modified': 125, 'Deferred': 2}
+   NVD no-CPE=2 (0.4%)  both no-CPE=1 (0.2%)
+   version-identifiable: NVD=99.6%  NVD+vc=99.8%
+   examples w/o any CPE (id, published, status, #affectedSrc): [('CVE-2025-47855', '2026-01-13', 'Deferred', 1)]
+-- JPCERT/CC: total=690
+   by year:  {'2024': 281, '2025': 270, '2026': 139}
+   status :  {'Deferred': 412, 'Analyzed': 198, 'Modified': 72, 'Awaiting Analysis': 8}
+   NVD no-CPE=420 (60.9%)  both no-CPE=356 (51.6%)
+   version-identifiable: NVD=37.1%  NVD+vc=44.3%
+   examples w/o any CPE (id, published, status, #affectedSrc): [('CVE-2021-46686', '2025-02-18', 'Deferred', 1), ('CVE-2023-39933', '2024-03-18', 'Deferred', 1), ('CVE-2023-49780', '2025-02-12', 'Deferred', 1), ('CVE-2023-40160', '2024-03-18', 'Deferred', 1)]
+-- Microsoft: total=3829
+   by year:  {'2024': 1095, '2025': 1244, '2026': 1490}
+   status :  {'Analyzed': 3265, 'Modified': 551, 'Awaiting Analysis': 7, 'Undergoing Analysis': 6}
+   NVD no-CPE=12 (0.3%)  both no-CPE=0 (0.0%)
+   version-identifiable: NVD=92.9%  NVD+vc=94.1%
+-- OpenSSL: total=53
+   by year:  {'2024': 9, '2025': 6, '2026': 38}
+   status :  {'Analyzed': 22, 'Modified': 20, 'Deferred': 11}
+   NVD no-CPE=11 (20.8%)  both no-CPE=0 (0.0%)
+   version-identifiable: NVD=79.2%  NVD+vc=100.0%

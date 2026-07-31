@@ -1,0 +1,179 @@
+\section{一次データソースとの比較}
+
+4章はNVD・VulnCheck内部の情報だけによる調査である．
+本章では一次データソースを基準とする4つの評価基準を定義し，FortinetとCiscoを対象に実測する．
+
+\subsection{評価基準}
+
+\begin{description}
+  \item[C1（エントリ欠落）] \mbox{} \\
+    一次データソースに存在する脆弱性が，NVD・VulnCheckに対応するエントリを持たない．
+    両者はCVE IDを主キーとするため，CVE ID未採番の脆弱性は構造的に収録され得ない．
+    そこでC1は，ベンダ独自ID（Fortinetの \texttt{FG-IR-yy-nnn}，Ciscoの \texttt{cisco-sa-*}，ヤマハのFAQページ等）のみで公開されている\textbf{C1a（未採番による欠落）}と，CVE IDは記載されているがエントリが存在しないか内容が空である\textbf{C1b（採番済みだが未収録）}に分ける．
+    4.1節のとおりVulnCheckの収録IDはNVDのID空間を超えないためC1を改善せず，C1aはCVE制度の設計に起因するため一次データソースを直接収集する以外に解決手段がない．
+  \item[C2（製品欠落）] \mbox{} \\
+    一次データソースがaffectedとする製品が，NVD・VulnCheck側のaffected製品として列挙されていない．
+  \item[C3（バージョン不一致）] \mbox{} \\
+    affectedまたはfixedのバージョン範囲が両者で異なる．
+    (a) 相手側が狭い（未検知を生む），(b) 相手側が広い（過剰検知を生む）に分類する．
+    前稿\cite{nakaoka2025}のCVE-2023-26207（FortiOS 7.0.0〜7.0.15がFortinetでは影響ありとされるがNVDでは列挙されない）は(a)の例である．
+  \item[C4（付与遅延）] \mbox{} \\
+    一次データソースでの公開日から，検知条件が付与されるまでの日数．
+\end{description}
+
+\subsection{対象データと方法}
+
+一次データソースには，ベンダが機械可読形式で公開しているものを用いる．
+FortinetはPSIRT AdvisoryのCVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}，Ciscoは openVuln API 由来のJSON\cite{vuls-data-raw-cisco-json}である．
+我々はFortinet PSIRTのHTMLを変換したデータ\cite{vuls-data-raw-fortinet}も保持しているが，CVRF/CSAFの更新に追従できておらず，2018〜2023年公開分ではノードの51\%でバージョンが空になる（実際のアドバイザリには記載がある）ため，本稿では基準として採用しない．
+この追従漏れ自体は，手書き抽出器が提供元の変更で静かに壊れるという6章の動機の実例である．
+
+Fortinet CVRF は \texttt{product\_tree} に影響を受けるバージョンを個別に列挙し（\texttt{FortiOS-7.6.1}，\texttt{FortiOS-7.6.0}…），\texttt{product\_statuses} で \texttt{Known Affected} を与える．
+修正版は持たないため，未検知は測れるが過剰検知は測れない．
+CSAF は \texttt{known\_affected} を範囲・単一版・「X.Y all versions」の3形式で与え，加えて \texttt{known\_not\_affected} として修正版を明示するため，過剰検知も測れる．
+製品情報を伴うCVRFは2022年以降に限られ（2022年155件，2023年158件，2024年147件，2025年80件，2026年76件），CSAFは173件である．
+
+Ciscoは影響を受けるバージョンを \texttt{productNames} に「Cisco Adaptive Security Appliance (ASA) Software 9.20.1」のような自然文で列挙する．
+285,161件中97.3\%は末尾にバージョンを伴うが，\textbf{CPEを持たない}ため，C2・C3の判定には製品名からCPEへの対応付けが別途必要である．
+本稿ではCiscoについてC1とC4のみを測定し，C2・C3は6章の方式の実装後に行う．
+
+C2・C3の判定には\textbf{境界値法}を用いる．
+バージョン範囲を連続区間として包含関係で比較すると誤判定が生じる．
+例えばCVE-2025-22254では，Fortinetが \texttt{<=6.4.15} と記述する範囲をNVDは \texttt{versionEndExcluding: 6.4.16} と記述しており，実在するバージョンの集合としては同一だが，連続区間では「NVD側が広い」と判定されてしまう．
+そこで (CVE, 製品) ごとに，一次データソースが影響ありとする版を\textbf{検知されるべき点}，修正版を\textbf{検知されるべきでない点}として，各点で相手側の条件の真偽が一致するかを評価する．
+前者で相手が偽なら未検知，後者で相手が真なら過剰検知である．
+製品の突合はCPEの製品部から区切り文字を除いた文字列で行う．
+なお一次データソース側のバージョン表現が解析できない (CVE, 製品) 組は比較から除外した．
+
+さらに結果をCVEの採番元で層別する．
+Fortinetが採番したCVEと，Fortinet製品に組み込まれた部品（OpenSSH等のOSS）に対して他者が採番したCVE（以下，\textbf{組込み部品のCVE}と呼ぶ．Fortinetは自社製品が影響を受けることをアドバイザリで公表する）では，NVDの振る舞いが大きく異なるためである．
+採番元はNVDの \texttt{sourceIdentifier} で判定した．
+
+C4はGit履歴から測る．
+我々はスナップショットを1日2回取得しGitで履歴管理しており\cite{vuls-data-db}，履歴はNVDが2025年6月26日，VulnCheckが2025年8月6日以降利用できる．
+各CVEのファイルを履歴に沿って辿り，\texttt{vulnerable} な \texttt{cpeMatch} が初めて現れたコミットの日付を求めた．
+起点はアドバイザリの \texttt{initial\_release\_date} である．
+
+\subsection{C1：エントリ欠落}
+
+\textbf{Fortinet}：CVRFの1,119件のアドバイザリに1,328件のCVEが対応する．
+このうち\textbf{37件のアドバイザリはCVE IDを持たない}（C1a，FG-IR-17-271やFG-IR-17-259など2019年以前が中心）．
+CVE IDを持つもののうちNVD・VulnCheckに存在しないものは0件であった（C1b）．
+
+\textbf{Cisco}：5,309件のアドバイザリに6,538件のCVEが対応し，\textbf{260件（4.9\%）のアドバイザリはCVE IDを持たない}（C1a，\texttt{cisco-sa-20170515} や \texttt{cisco-sa-20070105-csacs} など2017年以前が中心）．
+NVDに存在しないものは8件であった（C1b）．
+
+\subsection{C2・C3：製品欠落とバージョン不一致}
+
+結果を表\ref{tab:match}に示す．
+
+\begin{table*}[htbp]
+  \caption{Fortinet一次データソースとの一致状況（境界値法による，単位\%．各セルは NVD / VulnCheck）}
+  \ecaption{Agreement with the Fortinet primary source (boundary-value method; each cell is NVD / VulnCheck).}
+  \label{tab:match}
+  \begin{center}
+  \begin{tabular}{llrrrrrrrr}
+    \hline
+    基準 & 採番元 & CVE & 組 & 一致 & C2 製品欠落 & C3a 未検知 & C3b 過剰検知 & 未検知率 & 過剰検知率 \\
+    \hline
+    CVRF & Fortinet & 656 & 1,135 & 63.3 / 75.0 & 18.7 / 11.3 & 18.1 / 13.7 & --- & 17.1 / 9.7 & --- \\
+    CVRF & 他者 & 54 & 255 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & --- & 100.0 / 100.0 & --- \\
+    CSAF & Fortinet & 168 & 298 & 71.1 / \textbf{89.9} & 15.8 / \textbf{0.0} & 9.4 / 6.4 & 3.7 / 3.7 & 10.8 / \textbf{1.5} & 0.5 / 0.5 \\
+    CSAF & 他者 & 6 & 60 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 59.2 / 59.2 & 0.0 / 0.0 \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \footnotesize
+  一致・C2・C3a・C3bは(CVE,製品)組に対する割合，未検知率・過剰検知率は検証点に対する割合．
+  CVRFは修正版を持たないため過剰検知（C3b）を測定できない．CVRFは製品情報を伴う2022年以降を対象とする．年別の内訳は付録D に示す．
+\end{table*}
+
+\paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
+他者が採番したCVEについて，C2は\textbf{100.0\%}である（CVRFで54 CVE・255組，CSAFで6 CVE・60組）．
+C2の内訳を見ると，その99〜100\%は「当該CVEにCPEは付与されているが，Fortinet製品のCPEが1件も含まれない」ケースであった．
+該当例はCVE-2024-6387（regreSSHion），CVE-2023-48795（Terrapin），CVE-2024-3596（RADIUS）など，OpenSSHやRADIUS実装といった，Fortinet製品に組み込まれた部品の脆弱性である．
+Fortinetは自社製品が影響を受けることをアドバイザリで公表しているが，NVDのCPEには部品そのものの製品（\texttt{openssh:openssh} 等）しか並ばない．
+\textbf{OSS部品を組み込んだ製品を検知しようとすると，この欠落がそのまま未検知になる}．
+4章の付与率にはこの欠落は一切現れない．
+
+\paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%（CVRF）／71.1\%（CSAF）にとどまる．}
+4.5節でFortinetのCPE付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
+C2（18.7\%／15.8\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースであり，FortiSOAR，FortiExtender，FortiClient Windows/Mac/Linux のように，Fortinetが区別する製品をNVDが列挙していない，あるいは異なる粒度で表す場合である．
+\textbf{付与率は検知可能性の上限にすぎない}ことが，一次データソースとの直接比較で裏づけられた．
+
+\paragraph{(3) VulnCheckはFortinetについて大きく改善する．}
+CSAF基準・Fortinet採番では，一致が71.1\%から\textbf{89.9\%}へ，C2が15.8\%から\textbf{0.0\%}へ，検証点単位の未検知率が10.8\%から\textbf{1.5\%}へ改善する．
+一方で過剰検知率は0.5\%とNVDと同等であり，\textbf{本稿の測定範囲では「VulnCheckが過剰検知を増やす」という傾向は認められなかった}．
+ただしこれは修正版（\texttt{known\_not\_affected}）を負例とした評価であり，4.4節で見たバージョン指定を持たない粗いCPEの影響は，7章の実機・合成インベントリでの評価で改めて測る必要がある．
+
+\paragraph{(4) 組込み部品のCVEはVulnCheckでも改善しない．}
+他者採番のCVEについてはVulnCheckもC2 100.0\%であり，商用エンリッチメントもこの欠落を埋めていない．
+すなわちOSS部品を組み込んだ製品の検知条件は，一次データソースから取得する以外に手段がない．
+
+\subsection{C4：付与遅延}
+
+表\ref{tab:delay}に，公開から検知条件が初めて現れるまでの日数を示す．
+
+\begin{table*}[htbp]
+  \caption{検知条件が付与されるまでの日数（Git履歴による）}
+  \ecaption{Days until a detection condition first appears, measured from our Git history.}
+  \label{tab:delay}
+  \begin{center}
+  \begin{tabular}{llrrrrrrl}
+    \hline
+    対象 & 起点 & 付与済み & 中位数 & 75\% & 90\% & 最大 & 30日超 & 打切り（未付与） \\
+    \hline
+    NVD（全体） & CVE公開日 & 1,592 & 7 & 16 & 50 & 219 & 245 & 1,181 / 2,773（42.6\%） \\
+    VulnCheck（全体） & CVE公開日 & 1,973 & 1 & 4 & 11 & 238 & 75 & 576 / 2,549（22.6\%） \\
+    NVD（Fortinet） & アドバイザリ公開日 & 184 & 3 & 7 & 14 & 101 & 4 & 2 / 186（1.1\%） \\
+    VulnCheck（Fortinet） & アドバイザリ公開日 & 163 & 1 & 1 & 2 & 9 & 0 & 1 / 164（0.6\%） \\
+    NVD（Cisco） & アドバイザリ公開日 & 151 & 16 & 57 & 85 & 125 & 65 & 141 / 292（48.3\%） \\
+    VulnCheck（Cisco） & アドバイザリ公開日 & 224 & 1 & 3 & 44 & 125 & 35 & 26 / 250（10.4\%） \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \footnotesize
+  日数の単位は日．全体はGit履歴開始以降に公開されたCVEから25件ごとに抽出した標本，Fortinet・Ciscoは該当する全件．
+\end{table*}
+
+全体では，NVDは中位数7日・90\%点50日を要し，42.6\%は本稿執筆時点でも未付与である．
+VulnCheckは中位数1日・90\%点11日で，未付与は22.6\%にとどまる．
+\textbf{VulnCheckの最大の価値は最終的な網羅性ではなく初動の速さにある}という4.2節の解釈が，遅延の測定でも裏づけられた．
+
+ベンダ間の差は大きい．
+Fortinetでは NVD でも中位数3日・打切り1.1\%であるのに対し，\textbf{Ciscoでは中位数16日・90\%点85日で，48.3\%が本稿執筆時点でも未付与}である．
+CiscoはVulnCheckでも打切り10.4\%が残る．
+4.5節でCiscoは付与率77.2\%・\texttt{Deferred} 15.0\%，Fortinetは付与率99.6\%であった．
+\textbf{付与率の低いベンダでは，欠落だけでなく遅延も深刻である}ことが確認できた．
+
+\subsection{他の一次データソースへの拡張}
+
+以上の比較が可能だったのは，一次データソースが機械可読な形で提供されているためである．
+同じ比較を広げるには，HTMLのみで提供されるものを機械可読な形に変換する作業が必要になる．
+表\ref{tab:sources}に対象とするデータソースを示す．
+NVDでの供給状況（4章）が良好なもの（Fortinet，Microsoft，Apple）と不良なもの（Cisco，OpenSSL，JPCERT/CC経由のヤマハ）の両方を含め，「NVDで足りている領域」と「足りていない領域」を対比できるよう選定した．
+
+\begin{table*}[htbp]
+  \caption{対象とする一次データソース}
+  \ecaption{Primary data sources targeted in this work.}
+  \label{tab:sources}
+  \begin{center}
+  \begin{tabular}{lll}
+    \hline
+    分類 / ベンダ・プロジェクト & 一次データソースの提供形態 & 4章で観測されたNVDでの供給状況 \\
+    \hline
+    ネットワーク / Fortinet & CVRF/CSAF，PSIRT Advisory（HTML） & 付与率99.6\%．一致は63.3\%（5.4節） \\
+    ネットワーク / Cisco & openVuln API（JSON，CPEなし），CVRF/CSAF & 付与率77.2\%，\texttt{Deferred} 15.0\%，遅延中位数16日 \\
+    ネットワーク / ヤマハ & RTproのセキュリティFAQ（機種別HTML），JVN経由 & JPCERT/CC採番で付与率39.1\%，\texttt{Deferred} 59.7\% \\
+    OS / Microsoft Windows & MSRC（CVRF/API） & 付与率99.7\%だがバージョン特定可能率92.9\% \\
+    OS / Apple macOS & セキュリティリリースノート（HTML） & 付与率99.4\%（良好） \\
+    ソフトウェア / Apache httpd & Security Report（HTML） & Apache CNA全体で付与率92.5\% \\
+    ソフトウェア / OpenSSL & Vulnerabilities一覧・Advisory（HTML） & 付与率79.2\%，\texttt{Deferred} 20.8\% \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{table*}
+
+Fortinet，Cisco，Microsoftについては既に機械可読形式からの収集を実装済みである\cite{vuls-data-update}．
+一方，ヤマハ，Apple macOS，Apache httpd，OpenSSLはHTMLのみで提供されており未実装である．
+次章の提案はこれらを対象とする．

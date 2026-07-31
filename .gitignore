@@ -1,0 +1,21 @@
+ghcr.io/
+
+# LaTeX build artifacts
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.dvi
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.log
+docs/*.out
+docs/*.pdf
+docs/*.synctex.gz
+docs/*.toc
+
+# Python
+__pycache__/
+*.pyc
+
+# analysis intermediates (regenerate with extract.py)
+paper/analysis/*.csv

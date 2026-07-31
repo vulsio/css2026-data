@@ -1,0 +1,110 @@
+\section{測定の再現手順}
+\label{app:repro}
+
+本稿4章の数値は，以下の手順で再現できる．
+
+\begin{enumerate}
+  \item \texttt{vuls-data-update}\cite{vuls-data-update} により，NVD JSON 2.0フィード（\texttt{nvd/feed/cve/v2}）とVulnCheck NVD++（\texttt{vulncheck/nist-nvd2}）を取得する．または \texttt{vuls-data-db}\cite{vuls-data-db} のコンテナイメージから同名のタグを取得する．
+  \item 本稿と同時に公開する集計スクリプト（\texttt{paper/analysis/}）を実行する．
+    \texttt{extract.py} は全エントリから \texttt{id}，\texttt{published}，\texttt{vulnStatus}，\texttt{sourceIdentifier}，\texttt{cpeMatch} 数などをCSVに出力する．
+    \texttt{agg3.py} は表\ref{tab:year}，表\ref{tab:pending}，表\ref{tab:cna}および4.6節の値を，\texttt{extract2.py} は表\ref{tab:gran}の値を算出する．
+  \item 5章については，\texttt{fortinet\_c123.py} が表\ref{tab:match}を，\texttt{cisco\_c14.py} がCiscoのC1を，\texttt{c4.py}・\texttt{fortinet\_c4.py}・\texttt{cisco\_c4.py} が表\ref{tab:delay}を算出する．
+    \texttt{c4.py} 系は \texttt{git log -{}-name-only} で対象CVEを含むコミットを列挙し，\texttt{git cat-file -{}-batch} で各時点の内容を取得して，\texttt{vulnerable} な \texttt{cpeMatch} が初めて現れたコミット日を求める．
+  \item スナップショットの基準日は，データセット中の \texttt{lastModified} の最大値（本稿では2026年7月29日）とする．
+  \item 本稿の数値を厳密に再現するには，各データソースのコミットを固定する必要がある．
+    使用した全データソースのタグ名とコミットハッシュはリポジトリの \texttt{README.md} に記録しており，\texttt{sh paper/analysis/dataset-manifest.sh} で照合できる．
+    主要なものは NVD が \texttt{f34a9c3b16}，VulnCheck が \texttt{cc430fb117}，Fortinet CVRF が \texttt{41b12c7484}，Fortinet CSAF が \texttt{cedaf51587}，Cisco が \texttt{5fdc0f3ea0} である（いずれも2026年7月30日取得）．
+\end{enumerate}
+
+\section{公開月別コホートの解析状況}
+\label{app:cohort}
+
+\begin{table}[htbp]
+  \caption{公開月別の解析状況（取下げを除く，2026年7月29日時点）}
+  \ecaption{Enrichment status by publication month (rejected entries excluded).}
+  \label{tab:cohort}
+  \begin{center}
+  \small
+  \begin{tabular}{lrrrrrrr}
+    \hline
+    公開月 & 件数 & 経過日 & 完了\% & Def.\% & 待ち\% & NVD\% & VC\% \\
+    \hline
+    2024-07 & 3,113 & 744 & 83.2 & 16.8 & 0.0 & 83.2 & 90.7 \\
+    2024-08 & 2,897 & 713 & 87.5 & 12.5 & 0.0 & 87.5 & 93.6 \\
+    2024-09 & 2,514 & 682 & 88.5 & 11.5 & 0.0 & 88.5 & 94.6 \\
+    2024-10 & 3,566 & 652 & 77.8 & 22.2 & 0.0 & 77.8 & 86.5 \\
+    2024-11 & 4,056 & 621 & 70.0 & 30.0 & 0.0 & 70.0 & 78.9 \\
+    2024-12 & 3,431 & 591 & 59.0 & 41.0 & 0.0 & 59.0 & 71.0 \\
+    2025-01 & 4,275 & 560 & 59.3 & 40.7 & 0.0 & 59.3 & 69.8 \\
+    2025-02 & 3,673 & 529 & 71.8 & 28.2 & 0.0 & 71.8 & 78.3 \\
+    2025-03 & 4,007 & 501 & 64.3 & 35.7 & 0.0 & 64.3 & 73.9 \\
+    2025-04 & 4,034 & 470 & 57.2 & 42.8 & 0.0 & 57.2 & 69.8 \\
+    2025-05 & 3,980 & 440 & 70.7 & 29.3 & 0.0 & 70.7 & 79.8 \\
+    2025-06 & 3,681 & 409 & 67.1 & 32.9 & 0.0 & 67.1 & 77.2 \\
+    2025-07 & 3,776 & 379 & 71.5 & 28.5 & 0.0 & 71.5 & 80.7 \\
+    2025-08 & 3,628 & 348 & 60.1 & 39.9 & 0.0 & 60.1 & 72.9 \\
+    2025-09 & 4,320 & 317 & 64.4 & 35.6 & 0.0 & 64.4 & 75.0 \\
+    2025-10 & 4,273 & 287 & 61.7 & 38.3 & 0.0 & 61.7 & 78.3 \\
+    2025-11 & 3,022 & 256 & 58.5 & 41.5 & 0.0 & 58.5 & 76.2 \\
+    2025-12 & 5,493 & 226 & 50.4 & 49.6 & 0.0 & 50.4 & 80.7 \\
+    2026-01 & 4,309 & 195 & 59.8 & 40.2 & 0.0 & 59.8 & 73.8 \\
+    2026-02 & 4,616 & 164 & 66.0 & 34.0 & 0.0 & 66.0 & 78.2 \\
+    2026-03 & 6,234 & 136 & 70.2 & 25.5 & 4.3 & 70.2 & 80.6 \\
+    2026-04 & 5,810 & 105 & 67.6 & 27.7 & 4.7 & 67.6 & 81.2 \\
+    2026-05 & 6,940 & 75 & 55.2 & 38.1 & 6.7 & 56.7 & 80.7 \\
+    2026-06 & 7,947 & 44 & 53.8 & 40.7 & 5.5 & 53.9 & 78.2 \\
+    2026-07 & 8,953 & 14 & 33.5 & 36.0 & 30.4 & 33.7 & 76.4 \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \footnotesize
+  経過日は各月の15日を基準とした概算．Def.は \texttt{Deferred}，NVD\%・VC\%はCPE適用条件の付与率．
+\end{table}
+
+\section{追加の限界事項}
+\label{app:limits}
+
+\paragraph{VulnCheckの独自エンリッチメントの詳細．}
+同社は，約500のCVE関連データソースを正規化した自社基盤をもとにCPEの生成と検証を自動化しており，NISTが公式に登録したCPEのみを用いると述べている\cite{vulncheck-cpe}．
+一方で生成規則の詳細や精度指標は公表されていないため，本稿は入出力の観測に基づく評価にとどまる．
+
+\paragraph{\texttt{sourceIdentifier} はCNAの代理指標である．}
+表\ref{tab:cna}の分類には，採番CNA以外（ADPや参照元）に由来する識別子が含まれる可能性がある．
+厳密なCNA別集計にはCVEレコードのCNAコンテナを直接参照する必要がある．
+また表\ref{tab:cna}のApache CNAはhttpd以外のApacheプロジェクト全体を含むため，httpd単体の傾向とは一致しない．
+
+\paragraph{取下げエントリの代替IDを追跡していない．}
+\texttt{vulnStatus == "Rejected"} を除外する処理を入れているが，取下げの理由は一様でなく，重複を理由とする取下げでは代替IDへの追跡が必要である．
+
+\paragraph{VulnCheck NVD++ の系列選択．}
+本稿が用いたのは \texttt{nist-nvd2} 系列であり，同社が提供する他の系列（\texttt{nist-nvd} など）との差異は評価していない．
+
+\paragraph{CVRFは修正版を持たない．}
+CVRF基準では過剰検知（C3b）を測定できない．CSAFは \texttt{known\_not\_affected} を持つが173件に限られる．
+
+\section{Fortinet CVRF基準の年別内訳}
+\label{app:cvrf-year}
+
+\begin{table}[htbp]
+  \caption{CVRF基準の一致状況（年別，単位\%．各セルは NVD / VulnCheck）}
+  \ecaption{Agreement under the CVRF baseline, by year.}
+  \label{tab:cvrf-year}
+  \begin{center}
+  \small
+  \begin{tabular}{lrrrrrr}
+    \hline
+    公開年 & CVE & 組 & 一致 & C2 & C3a & 未検知率 \\
+    \hline
+    2022-2023 & 254 & 367 & 48.2 / 54.5 & 18.8 / 16.3 & 33.0 / 29.2 & 19.3 / 14.0 \\
+    2024 & 117 & 225 & 52.9 / 61.3 & 35.6 / 28.9 & 11.6 / 9.8 & 28.5 / 23.1 \\
+    2025 & 204 & 408 & 73.8 / 85.8 & 16.4 / 9.1 & 9.8 / 5.1 & 14.5 / 7.9 \\
+    2026 & 83 & 140 & 66.4 / 93.6 & 22.9 / 3.6 & 10.7 / 2.9 & 22.3 / 4.4 \\
+    \hline
+    合計 & 658 & 1,140 & 60.5 / 71.8 & 21.8 / 14.6 & 17.7 / 13.5 & 19.7 / 12.4 \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \footnotesize
+  採番元で層別していないため組込み部品のCVEを含む．
+  2024年でC2が高いのは，この年のアドバイザリに組込み部品のCVEが多く含まれるためである．
+\end{table}
