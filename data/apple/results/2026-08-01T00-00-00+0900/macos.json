@@ -1,0 +1,84 @@
+{
+    "jsonVersion": 4,
+    "lang": "",
+    "serverUUID": "",
+    "serverName": "macos",
+    "family": "pseudo",
+    "release": "",
+    "container": {
+        "containerID": "",
+        "name": "",
+        "image": "",
+        "type": "",
+        "uuid": ""
+    },
+    "platform": {
+        "name": "other",
+        "instanceID": ""
+    },
+    "scannedAt": "2026-08-01T00:00:00.000000000+09:00",
+    "scanMode": "fast mode",
+    "scannedVersion": "0.40.1",
+    "scannedRevision": "e6624e99e67e727472bc7f2c482902ffa630d587-2026-07-30T01:41:13Z",
+    "scannedBy": "vuls",
+    "scannedVia": "pseudo",
+    "scannedIpv4Addrs": [
+        "10.0.2.15"
+    ],
+    "scannedIpv6Addrs": [
+        "fd17:625c:f037:2:da8e:fc12:4d8a:8aa5"
+    ],
+    "reportedAt": "0001-01-01T00:00:00Z",
+    "reportedVersion": "",
+    "reportedRevision": "",
+    "reportedBy": "",
+    "errors": [],
+    "warnings": [],
+    "scannedCves": {},
+    "runningKernel": {
+        "release": "",
+        "version": "",
+        "rebootRequired": false
+    },
+    "packages": {},
+    "config": {
+        "scan": {
+            "logDir": "/var/log/vuls",
+            "logJSON": false,
+            "resultsDir": "/home/vuls/css2026-data/data/apple/results",
+            "servers": {
+                "macos": {
+                    "serverName": "macos",
+                    "cpeNames": [
+                        "cpe:/o:apple:macos:14.7.4",
+                        "cpe:/a:apple:safari:18.3.1"
+                    ],
+                    "type": "pseudo",
+                    "wordpress": {},
+                    "portscan": {},
+                    "windows": {}
+                },
+                "macos_x": {
+                    "serverName": "macos_x",
+                    "cpeNames": [
+                        "cpe:/o:apple:macos:10.13.6",
+                        "cpe:/o:apple:mac_os_x:10.13.6",
+                        "cpe:/a:apple:safari:13.0.4"
+                    ],
+                    "type": "pseudo",
+                    "wordpress": {},
+                    "portscan": {},
+                    "windows": {}
+                }
+            },
+            "vuls2": {
+                "Repository": "ghcr.io/vulsio/vuls-nightly-db:0",
+                "Path": "/home/vuls/.cache/vuls/vuls.db",
+                "SkipUpdate": true
+            }
+        },
+        "report": {
+            "logJSON": false
+        }
+    }
+}

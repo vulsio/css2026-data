@@ -1,0 +1,4 @@
+[vuls2]
+repository = "ghcr.io/vulsio/vuls-nightly-db:0"
+path = "/home/vuls/css2026-data/data/microsoft/vuls.nvd.db"
+skipUpdate = true
