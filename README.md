@@ -72,6 +72,9 @@ python3 cisco_c14.py        # 5.3節 Cisco の C1
 python3 c4.py 25            # 表6 全体行
 python3 fortinet_c4.py      # 表6 Fortinet行
 python3 cisco_c4.py         # 表6 Cisco行
+python3 detect_eval.py      # 表8（7章の検知結果の比較）
 ```
+
+7章の検知結果そのものの取り直しは [`data/README.md`](data/README.md) を参照。
 
 データルートは `paper/analysis/c123b.py` の `BASE` で定義している。

@@ -1,4 +1,0 @@
-[vuls2]
-repository = "ghcr.io/vulsio/vuls-nightly-db:0"
-path = "/home/vuls/css2026-data/data/apple/vuls.nvd-vulncheck.db"
-skipUpdate = true

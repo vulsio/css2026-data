@@ -36,11 +36,11 @@ Future Corporation}
 
 \begin{abstract}
 我々はOSS脆弱性スキャナVulsと脆弱性DBを開発・運用している．
-CVE報告件数の急増（2026年は210日間で44,809件）を受け，検知条件をどこから得るべきかを定量的に明らかにする．
-まずNVDとVulnCheck NVD++の全件（2026年7月29日時点，取下げ除き353,704件）を調査し，NVDによるCPE適用条件の付与率が2023年以前の100\%から2024年80.5\%，2025年62.6\%，2026年56.1\%へ低下し，2025年公開分の37.3\%をNVD自身が解析対象外と明示していることを示した．
-次にFortinetのCVRF/CSAFと突き合わせ，Fortinet採番CVEでも一致は63.3\%にとどまること，製品に組み込まれたOpenSSH等のOSS部品の脆弱性では両者ともFortinet製品を列挙しないことを明らかにした．
-さらにGit履歴から付与遅延を測り，NVDは中位数7日・42.6\%が未付与（Ciscoでは16日・48.3\%），VulnCheckは1日・22.6\%であった．
-そこで，一次データソースをLLMで検証可能・再現可能に構造化する方式を提案する．
+CVE報告件数の急増（2026年は210日で44,809件）を受け，検知条件をどこから得るべきかを定量的に明らかにする．
+NVDとVulnCheck NVD++の全件（取下げ除き353,704件）の調査により，NVDのCPE適用条件の付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年公開分の37.3\%をNVD自身が解析対象外と明示していることを示した．
+FortinetのCVRF/CSAFとの突合では，Fortinet採番CVEでも一致は63.3\%にとどまり，製品に組み込まれたOSS部品の脆弱性では両者ともFortinet製品を列挙しないことを明らかにした．
+入力データソースのみを変えたDBで検知すると，サポート終了版FortiOSはNVDのみで未検知率68.8\%（93.5\%が組込み部品），VulnCheck追加時のWindowsは過剰検知率70.6\%に達し，未検知は2023年以前に限っても減らなかった．
+そこで一次データソースをLLMで検証可能・再現可能に構造化する方式を提案する．
 \end{abstract}
 
 %% キーワード (1--5単語) の記載は任意．
@@ -51,10 +51,10 @@ CVE報告件数の急増（2026年は210日間で44,809件）を受け，検知�
 
 \begin{eabstract}
 We develop Vuls, an open-source vulnerability scanner, and its database.
-Given the sharp growth of reported CVEs (44,809 in the first 210 days of 2026), we ask where detection conditions should come from and answer with measurements.
-Analysing all 353,704 non-rejected entries of NVD and VulnCheck NVD++ as of 2026-07-29, we show NVD's coverage of CPE applicability statements fell from 100\% up to 2023 to 80.5\% (2024), 62.6\% (2025) and 56.1\% (2026), and that NVD marked 37.3\% of 2025 entries Deferred.
-Matching against Fortinet's CVRF/CSAF, we further show only 63.3\% agree even for Fortinet-assigned CVEs, and that for vulnerabilities in embedded OSS components such as OpenSSH, neither source lists a single Fortinet product.
-From our Git history we measure assignment latency at a median of 7 days for NVD with 42.6\% never assigned (16 days, 48.3\% for Cisco).
+Given the sharp growth of reported CVEs (44,809 in the first 210 days of 2026), we ask where detection conditions should come from.
+Analysing all 353,704 non-rejected entries of NVD and VulnCheck NVD++, we show NVD's coverage of CPE applicability statements fell from 100\% up to 2023 to 56.1\% in 2026, with 37.3\% of 2025 entries marked Deferred.
+Against Fortinet's CVRF/CSAF, only 63.3\% agree even for Fortinet-assigned CVEs, and for embedded OSS components neither source lists a single Fortinet product.
+Scanning six environments with databases differing only in their input source, we measure a 68.8\% miss rate on an end-of-life FortiOS with NVD alone (93.5\% embedded-component CVEs), a 70.6\% false-positive rate on Windows once VulnCheck is added, and no reduction in misses for pre-2024 CVEs.
 We therefore propose a verifiable, reproducible LLM-assisted method for structuring primary sources.
 \end{eabstract}
 

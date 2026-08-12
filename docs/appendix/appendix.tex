@@ -7,7 +7,7 @@
   \item \texttt{vuls-data-update}\cite{vuls-data-update} により，NVD JSON 2.0フィード（\texttt{nvd/feed/cve/v2}）とVulnCheck NVD++（\texttt{vulncheck/nist-nvd2}）を取得する．または \texttt{vuls-data-db}\cite{vuls-data-db} のコンテナイメージから同名のタグを取得する．
   \item 本稿と同時に公開する集計スクリプト（\texttt{paper/analysis/}）を実行する．
     \texttt{extract.py} は全エントリから \texttt{id}，\texttt{published}，\texttt{vulnStatus}，\texttt{sourceIdentifier}，\texttt{cpeMatch} 数などをCSVに出力する．
-    \texttt{agg3.py} は表\ref{tab:year}，表\ref{tab:pending}，表\ref{tab:cna}および4.6節の値を，\texttt{extract2.py} は表\ref{tab:gran}の値を算出する．
+    \texttt{agg3.py} は表\ref{tab:year}，表\ref{tab:pending}，表\ref{tab:cna}および4.4節の値を，\texttt{extract2.py} は表\ref{tab:gran}の値を算出する．
   \item 5章については，\texttt{fortinet\_c123.py} が表\ref{tab:match}を，\texttt{cisco\_c14.py} がCiscoのC1を，\texttt{c4.py}・\texttt{fortinet\_c4.py}・\texttt{cisco\_c4.py} が表\ref{tab:delay}を算出する．
     \texttt{c4.py} 系は \texttt{git log -{}-name-only} で対象CVEを含むコミットを列挙し，\texttt{git cat-file -{}-batch} で各時点の内容を取得して，\texttt{vulnerable} な \texttt{cpeMatch} が初めて現れたコミット日を求める．
   \item スナップショットの基準日は，データセット中の \texttt{lastModified} の最大値（本稿では2026年7月29日）とする．
@@ -15,6 +15,156 @@
     使用した全データソースのタグ名とコミットハッシュはリポジトリの \texttt{README.md} に記録しており，\texttt{sh paper/analysis/dataset-manifest.sh} で照合できる．
     主要なものは NVD が \texttt{f34a9c3b16}，VulnCheck が \texttt{cc430fb117}，Fortinet CVRF が \texttt{41b12c7484}，Fortinet CSAF が \texttt{cedaf51587}，Cisco が \texttt{5fdc0f3ea0} である（いずれも2026年7月30日取得）．
 \end{enumerate}
+
+\section{4章の詳細}
+\label{app:survey-detail}
+
+4.3節で要約した滞留期間・粒度・採番CNA別の内訳を示す．
+
+\subsection*{未付与エントリの滞留期間}
+
+表\ref{tab:pending}に，スナップショット時点でエンリッチメントが完了していないエントリの公開からの経過日数を状態別に示す．
+
+\begin{table}[htbp]
+  \caption{未エンリッチのまま滞留しているエントリの経過日数（2026年7月29日時点，日）}
+  \ecaption{Age of entries left unenriched, as of 2026-07-29 (days).}
+  \label{tab:pending}
+  \begin{center}
+  \small
+  \begin{tabular}{lrrrrrr}
+    \hline
+    vulnStatus & 件数 & 中位数 & 75\% & 90\% & 最大 & 90日超 \\
+    \hline
+    Received & 1,095 & 4 & 5 & 10 & 10 & 0 \\
+    Awaiting Analysis & 2,306 & 43 & 84 & 124 & 471 & 536 \\
+    Undergoing Analysis & 778 & 8 & 9 & 63 & 896 & 10 \\
+    Deferred & 41,363 & 286 & 521 & 687 & 897 & 32,215 \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{table}
+
+NVDがエンリッチメント対象と認識している \texttt{Awaiting Analysis} でも，中位数43日，90\%点124日，最長471日が経過しており，3か月以上経過したものが536件ある．
+\texttt{Deferred} は41,363件が中位数286日経過し，うち32,215件は90日を超えている．
+
+運用上の含意は明確である．
+\textbf{新規に公開されたCVEについては，公開後1〜4か月はNVDの検知条件が存在しない前提で設計する必要がある．}
+これは，公開直後の脆弱性ほど攻撃に利用されやすいという性質と正面から衝突する．
+
+\subsection*{検知条件の粒度}
+
+付与された条件がバージョンを特定できるかを評価する．
+2024年以降に公開された132,928件について，各エントリが持つ最も細かい粒度の \texttt{vulnerable} な \texttt{cpeMatch} で分類した結果を表\ref{tab:gran}に示す．
+
+\begin{table}[htbp]
+  \caption{検知条件の粒度（2024年以降公開の132,928件）}
+  \ecaption{Granularity of detection conditions (132,928 entries published since 2024).}
+  \label{tab:gran}
+  \begin{center}
+  \small
+  \begin{tabular}{lrr}
+    \hline
+    エントリの最良粒度 & NVDのみ & NVD＋VulnCheck \\
+    \hline
+    バージョン範囲（range） & 47.0\% & 59.8\% \\
+    特定バージョン（exact） & 16.9\% & 18.0\% \\
+    バージョン指定なし（\texttt{-}） & 1.7\% & 2.6\% \\
+    全バージョン（\texttt{*}） & 0.2\% & 0.2\% \\
+    検知条件なし & 34.2\% & 19.4\% \\
+    \hline
+    \textbf{バージョン特定可能（上位2行の計）} & \textbf{63.9\%} & \textbf{77.8\%} \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{table}
+
+\texttt{cpeMatch} 単位では，NVDの \texttt{vulnerable} な適用条件505,834件の内訳が exact 48.5\%，range 36.0\%，指定なし 15.3\%，全バージョン 0.2\%，VulnCheckの \texttt{vcConfigurations} 374,082件が range 50.1\%，exact 38.9\%，指定なし 10.7\%，全バージョン 0.3\% であり，VulnCheckのほうが範囲表現の比率が高い．
+
+ただし粒度の細かさだけでは品質を判断できない．
+VulnCheckの \texttt{vcConfigurations} には，バージョンを特定できる条件と製品全体を指す条件が同一エントリ内に混在する例がある．
+CVE-2024-6387（regreSSHion）では，\texttt{cpe:2.3:a:openssh:openssh} の 8.5p1〜9.7p1 という適切な範囲指定がある一方で，\texttt{cpe:2.3:a:gnu:grub2:-}，\texttt{cpe:2.3:o:redhat:enterprise\_linux:-} のようにバージョン指定を持たない条件も並ぶ．
+後者をそのまま用いれば当該製品を持つすべてのホストが検知対象となり，過剰検知を招く．
+\textbf{付与率の向上が検知精度の向上を意味するとは限らない}．
+この点は7章の評価で分離して測る．
+
+\subsection*{採番CNA別の傾向}
+
+一次データソースとして重視するベンダ・プロジェクトについて，\texttt{sourceIdentifier} を採番CNAの代理指標として集計した結果を表\ref{tab:cna}に示す（2024年以降公開，取下げを除く）．
+
+\begin{table*}[htbp]
+  \caption{採番CNA別のCPE適用条件の状況（2024年以降公開）}
+  \ecaption{CPE applicability coverage by assigning CNA (published since 2024).}
+  \label{tab:cna}
+  \begin{center}
+  \begin{tabular}{lrrrrrr}
+    \hline
+    CNA & 件数 & NVD付与率\% & VulnCheck付与率\% & VC補完率\% & Deferred\% & バージョン特定可能\%（NVD→＋VC） \\
+    \hline
+    Microsoft & 3,829 & 99.7 & 100.0 & 0.3 & 0.0 & 92.9 → 94.1 \\
+    Fortinet & 450 & 99.6 & 99.8 & 0.2 & 0.4 & 99.6 → 99.8 \\
+    Apple & 1,843 & 99.4 & 99.9 & 1.1 & 0.0 & 99.3 → 99.9 \\
+    Apache & 1,004 & 92.5 & 99.4 & 6.9 & 2.1 & 91.7 → 98.8 \\
+    OpenSSL & 53 & 79.2 & 100.0 & 20.8 & 20.8 & 79.2 → 100.0 \\
+    Cisco & 845 & 77.2 & 95.9 & 18.7 & 15.0 & 74.7 → 91.7 \\
+    JPCERT/CC & 690 & 39.1 & 48.4 & 9.3 & 59.7 & 37.1 → 44.3 \\
+    \hline
+    （参考）MITRE & 13,455 & 74.0 & 78.4 & 4.4 & 24.5 & --- \\
+    （参考）GitHub & 13,001 & 71.3 & 88.9 & 17.6 & 26.5 & --- \\
+    （参考）VulDB & 12,594 & 73.8 & 88.7 & 14.8 & 26.2 & --- \\
+    （参考）VulnCheck & 5,047 & 48.1 & 72.4 & 24.3 & 47.0 & --- \\
+    （参考）Patchstack & 14,753 & 17.3 & 44.6 & 27.3 & 82.7 & --- \\
+    \hline
+  \end{tabular}
+  \end{center}
+  \footnotesize
+  Apache CNAはhttpd以外のApacheプロジェクト全体を含む．
+\end{table*}
+
+CNAによる差は極端である．
+Microsoft，Apple，Fortinetは付与率がほぼ100\%であり，NVDの遅延はすべてのベンダに一様に及んでいるのではなく，優先度の高いベンダでは維持されている．
+ただし\textbf{Microsoftは付与率99.7\%に対しバージョン特定可能率が92.9\%}と乖離する．
+Windows製品のCPEはバージョン部が \texttt{-} で表現され，パッチ適用状態は更新プログラム（KB）情報に依存するためであり，CPE適用条件の存在をもって検知可能と判断できない典型例である．
+
+Ciscoは付与率77.2\%・\texttt{Deferred} 15.0\%で，VulnCheckが18.7ポイント補完して95.9\%へ，バージョン特定可能率も74.7\%から91.7\%へ改善する．
+商用エンリッチメントの価値が最も明確に出る領域である．
+OpenSSLは53件中20.8\%が \texttt{Deferred} であり，VulnCheckの補完で100\%へ到達する．
+OSSプロジェクト自身が丁寧なアドバイザリを公開していても，NVD側で解析されていない．
+
+一方\textbf{JPCERT/CC採番のCVEは付与率39.1\%・\texttt{Deferred} 59.7\%}と際立って低く，VulnCheckでも48.4\%，バージョン特定可能率は37.1\%から44.3\%への改善にとどまる．
+JPCERT/CCはJVNを通じて国内ベンダの脆弱性を採番する経路であり，ヤマハなど国内ネットワーク機器ベンダの脆弱性はこの経路に乗る．
+\textbf{国内ベンダ製品の検知条件は，NVDもVulnCheckもほぼ供給していない}．
+また参考として挙げたWordPressプラグイン系のCNA（Patchstack）は付与率17.3\%・\texttt{Deferred} 82.7\%であり，NVDの \texttt{Deferred} は無作為ではなく領域に偏って適用されている．
+
+\section{対象とする一次データソース}
+\label{app:sources}
+
+5.6節で述べた，一次データソースからの収集対象とするデータソースの一覧を表\ref{tab:sources}に示す．
+
+\begin{table*}[htbp]
+  \caption{対象とする一次データソース}
+  \ecaption{Primary data sources targeted in this work.}
+  \label{tab:sources}
+  \begin{center}
+  \begin{tabular}{lll}
+    \hline
+    分類 / ベンダ・プロジェクト & 一次データソースの提供形態 & 4章で観測されたNVDでの供給状況 \\
+    \hline
+    ネットワーク / Fortinet & CVRF/CSAF，PSIRT Advisory（HTML） & 付与率99.6\%．一致は63.3\%（5.4節） \\
+    ネットワーク / Cisco & openVuln API（JSON，CPEなし），CVRF/CSAF & 付与率77.2\%，\texttt{Deferred} 15.0\%，遅延中位数16日 \\
+    OS / Microsoft Windows & MSRC（CVRF/API） & 付与率99.7\%だがバージョン特定可能率92.9\% \\
+    OS / Apple macOS & セキュリティリリースノート（HTML） & 付与率99.4\%だが未検知率34.2\%（7章） \\
+    ソフトウェア / Apache httpd & CVE JSON（HTMLの生成元） & Apache CNA全体で付与率92.5\% \\
+    ソフトウェア / OpenSSL & セキュリティアドバイザリJSON & 付与率79.2\%，\texttt{Deferred} 20.8\% \\
+    ソフトウェア / nginx & セキュリティアドバイザリ一覧（HTML） & \texttt{f5:nginx} のCPEは41件のみ（2023年以前） \\
+    ソフトウェア / OpenSSH & セキュリティ情報・リリースノート（HTML＋テキスト） & \texttt{openbsd:openssh} に134件．ベンダ側は7件のみ \\
+    \hline
+  \end{tabular}
+  \end{center}
+\end{table*}
+
+nginxはNVDが \texttt{cpe:2.3:a:f5:nginx} のCPEを41件にしか付与しておらず2023年より後の公開分が存在しないのに対し，ベンダのページは62件を挙げる\cite{vdu-pr906}．
+OpenSSHは逆に，NVDの供給は足りているが一次データソース側にCVE IDによる索引が無い例である（6.5節）．
+各データソースへの適用方針は6.6節に示す．
 
 \section{公開月別コホートの解析状況}
 \label{app:cohort}

@@ -19,3 +19,6 @@ __pycache__/
 
 # analysis intermediates (regenerate with extract.py)
 paper/analysis/*.csv
+
+# detect 用の vuls 設定は data/bin/detect.sh が生成する
+data/*/config.*.toml

@@ -1,0 +1,119 @@
+# data/ — 検知比較の実験一式
+
+同じスキャン結果を 4 つの脆弱性 DB にかけ、検知条件の供給源の違いが検知結果に
+どう出るかを見るためのデータとスクリプト。
+
+| slot | 結果ディレクトリ | 使う DB | 中身 |
+|---|---|---|---|
+| 00 | `<vendor>/results/2026-08-01T00-00-00+0900/` | `db/vuls.<vendor>.db` | 一次データソース |
+| 01 | `…T00-00-01+0900/` | `db/vuls.nvd.db` | NVD |
+| 02 | `…T00-00-02+0900/` | `db/vuls.vulncheck.db` | VulnCheck NVD++ |
+| 03 | `…T00-00-03+0900/` | `db/vuls.nvd-vulncheck.db` | NVD + VulnCheck |
+
+ディレクトリ名の日時に意味はない。vuls v1 の `report` が結果ディレクトリを日時で
+選ぶため、同じスキャン結果を 4 つに複製して別々の DB で検知させるための連番である。
+`scannedCves` 以外は 4 つとも同一なので、差分はすべて DB の違いに由来する。
+
+対象は Fortinet / Microsoft / Apple / Cisco の 4 ベンダ。
+
+### slot 02 と slot 03 は足し算にならない
+
+vuls は CPE のデータソースを 2 つに分けており、VulnCheck NVD++（と JVN）は
+「信頼度の低い」側に置かれている（`detector/vuls2/vuls2.go` の
+`verifiedCPESources` / `isSuppressedCPESource`）。ある CVE について
+verified 側（NVD、Fortinet、Cisco、PaloAlto、Apple）が `part:vendor:product` を
+**定義してさえいれば**、たとえそのバージョン範囲がスキャン対象に一致せず非検知でも、
+VulnCheck 側の同じ製品の検知は捨てられる（`collectVerifiedProducts` と
+`suppress`。go-cve-dictionary の `isCpeURIAlsoDefinedInVerifiedDataSource` の再現）。
+
+そのため各 slot の意味は次のようになる。
+
+- slot 02 は DB に verified ソースが 1 つも入っていないので抑制が働かない。
+  **VulnCheck のデータそのものが持つ検知力**を測っている。
+- slot 03 は NVD が verified 側として抑制をかける。
+  **NVD+VulnCheck を積んだ vuls の実際の挙動**であり、slot 01 と slot 02 の和集合ではない。
+  実際 fortios_7-0-1 では slot 02 が 188 件なのに slot 03 は 152 件で、slot 01 の 151 件から
+  1 件しか増えていない。
+
+「VulnCheck の過剰検知」を論じるときは、どちらの意味で数えているかを明示する必要がある。
+
+## やり直し方
+
+```sh
+sh data/bin/unpack-db.sh          # commit 済みの .db.zst を展開（初回のみ）
+sh data/bin/detect.sh             # 4 slot ぶん検知し直す
+python3 data/bin/summary.py       # 結果を突き合わせて表示
+```
+
+ベンダを指定するなら `sh data/bin/detect.sh fortinet` のように引数を渡す。
+
+- 検知に使う vuls（v1）はリポジトリ同梱の `data/vuls`。別のビルドを使うなら
+  `VULS=/path/to/vuls sh data/bin/detect.sh`。
+- `data/<vendor>/config.<db>.toml` は `detect.sh` が毎回生成する。DB パスは
+  リポジトリルートからの相対にしてあるので clone 先に依存しない（そのため
+  `detect.sh` はルートを cwd にして vuls を呼ぶ）。手で編集しても上書きされる。
+- `detect.sh` は結果 JSON を上書きする。検知内容以外に `reportedBy`（実行ホスト名）と
+  `reportedRevision`（vuls のビルドID）も入るので、別マシンで流すとこの 2 つは変わる。
+
+## スキャン結果について
+
+スキャンは済んでいて、やり直す必要はない。`<vendor>/results/**.json` の
+`config.scan.servers` に、どのサーバをどの CPE で見立てたかが残っている。
+
+- Fortinet / Apple / Cisco、および Microsoft の slot 01〜03 は vuls v1 の pseudo スキャン
+  （`cpeNames` を宣言しただけの仮想サーバ）。
+- Microsoft の slot 00 だけは実機 Windows のスキャン結果。適用済み KB で検知する
+  ため CPE では代用できず、実機を用意しない限り取り直せない。
+  ここを pseudo スキャンで上書きしないこと。
+
+## DB を作り直す
+
+通常は不要（`db/vuls.*.db.zst` を commit してある）。スナップショットを新しくする
+ときだけ、`data/sources.tsv` の commit を更新して次を流す。
+
+必要なツール:
+
+- `vuls-data-update` … `github.com/MaineK00n/vuls-data-update` の
+  `feat-extract-apple`（`0bc5a77d9b410c054007a3cb8fa20065a85a416f`）。
+  Apple Security Releases の fetch / extract がまだ本流に入っていないため。
+- `vuls`（nightly / vuls2）… `github.com/MaineK00n/vuls2`
+  （`663ae1050b94a610d00c569a3dab1503a07e8a65`）。DB の init / add / compress に使う。
+
+```sh
+# 1. sources.tsv の tag / commit ぶんだけ dotgit を取得する
+vuls-data-update dotgit pull --dir data/db --checkout <commit> --restore \
+    ghcr.io/vulsio/vuls-data-db:<tag>
+
+# 2. kind=raw の行だけ、手元で extract する（現状 apple のみ）
+vuls-data-update extract apple-security-releases \
+    data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-raw-apple-security-releases \
+    --dir data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-extracted-apple-security-releases
+
+# 3. DB ごとに、sources.tsv の上の行から順に投入して圧縮する
+vuls db init     --dbpath data/db/vuls.<name>.db
+vuls db add      --dbpath data/db/vuls.<name>.db data/db/ghcr.io/vulsio/vuls-data-db/<extracted tag>
+vuls db compress --dbpath data/db/vuls.<name>.db   # .db を compact し .db.zst を作る
+```
+
+`ghcr.io/vulsio/vuls-data-db:vuls-data-extracted-apple-security-releases` は空の
+プレースホルダなので、apple だけは raw から extract する必要がある。
+
+## ファイル
+
+```
+data/
+  vuls                    検知に使う vuls v1 のバイナリ
+  sources.tsv             各 DB がどの tag / commit から作られたかの記録
+  db/
+    vuls.*.db.zst         commit 済みの DB（unpack-db.sh で展開）
+    vuls.*.db             展開後の DB（.gitignore 済み）
+    ghcr.io/              dotgit の取得先（.gitignore 済み）
+  <vendor>/
+    config.*.toml         detect.sh が生成（.gitignore 済み）
+    results/<slot>/*.json スキャン結果 兼 検知結果
+  bin/
+    common.sh             共通定義（ベンダ・slot・パス）
+    unpack-db.sh          .db.zst を展開
+    detect.sh             slot ごとに DB を変えて検知
+    summary.py            slot 00 を基準に漏れ／過剰を集計
+```
