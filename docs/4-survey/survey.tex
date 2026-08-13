@@ -1,119 +1,122 @@
 \section{検知条件の供給実態の定量調査}
+\label{sec:supply}
+
+本章は検知条件の供給を2つの角度から測る．
+前半（\ref{sec:year}〜\ref{sec:grain}節）はNVD・VulnCheck内部の情報だけによる全件調査であり，後半（\ref{sec:c1c3}〜\ref{sec:c4}節）は一次データソースを基準とする比較である．
 
 \subsection{調査対象と方法}
+\label{sec:method3}
 
-調査対象は，我々が運用するデータ収集基盤が取得した次の2系統のスナップショットである．
+全件調査の対象は，我々が運用するデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショット（取得時のコミットハッシュで固定）である．
+両者のCVE ID集合を比べると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件で，\textbf{VulnCheck NVD++ の収録IDはNVDのID空間を超えない}．
+集計では \texttt{vulnStatus} が \texttt{Rejected} の17,712件を除外し353,704件を対象とし，各エントリの \texttt{configurations}（NVD）と \texttt{vcConfigurations}（VulnCheck独自）から \texttt{vulnerable: true} の \texttt{cpeMatch} の個数とバージョン指定の種別を数えた\footnote{取下げエントリは製品情報を持たないことが正常であり，含めると付与率を不当に低く見せる．実例として，Fortinet採番のCVEには2025年に一括取下げされたものが866件含まれ，除外しない場合Fortinetの付与率は32.8\%，除外後は99.6\%と算出される．}．
 
-\begin{description}
-  \item[NVD] \mbox{} \\
-    NVD JSON 2.0 データフィード（\texttt{nvdcve-2.0-*.json.gz}）由来，371,416件\cite{nvd-feed}
-  \item[VulnCheck] \mbox{} \\
-    VulnCheck NVD++ (\texttt{nist-nvd2}) API 由来，371,393件\cite{vulncheck-nvd2}
-\end{description}
+一次データソースとの比較には次の4基準を定める．
+\textbf{C1（エントリ欠落）}一次データソースに存在する脆弱性がNVD・VulnCheckにエントリを持たない．両者はCVE IDを主キーとするため，CVE ID未採番の脆弱性は構造的に収録され得ない（\textbf{C1a}）．上記のとおりVulnCheckの収録IDはNVDのID空間を超えないためC1を改善しない．
+\textbf{C2（製品欠落）}一次データソースがaffectedとする製品が相手側に列挙されていない．
+\textbf{C3（バージョン不一致）}affectedまたはfixedの範囲が異なる．相手側が狭ければ未検知（C3a），広ければ過剰検知（C3b）を生む．
+\textbf{C4（付与遅延）}一次データソースでの公開日から検知条件が付与されるまでの日数．
 
-スナップショットは2026年7月29日時点（データセット中の \texttt{lastModified} の最大値）である．
-各データソースは取得時のコミットハッシュで固定しており，付録\ref{app:repro}のとおり同一条件で再検証できる．
-両者のCVE ID集合を比較すると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件であった．
-\textbf{VulnCheck NVD++ の収録IDはNVDのID空間を超えない}．
-したがってVulnCheckは，5章で定義するエントリ欠落（C1）を原理的に改善しない．
+一次データソースには，FortinetのPSIRT Advisory（CVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}）とCiscoのopenVuln API由来のJSON\cite{vuls-data-raw-cisco-json}を用いる．
+CVRFは影響を受けるバージョンを列挙するが修正版を持たないため過剰検知は測れず，CSAFは \texttt{known\_not\_affected} として修正版を明示するため過剰検知も測れる．製品情報を伴うCVRFは616件，CSAFは173件である．
+Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙し\textbf{CPEを持たない}ため，製品名からCPEへの対応付けを別途実装した．285,161件の \texttt{productNames} の97.5\%が対応付くが，アドバイザリ単位では31.9\%にとどまる．
+このためCiscoについてはC1とC4を測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
-以降の集計では \texttt{vulnStatus} が \texttt{Rejected} の17,712件を除外し，353,704件を対象とする．
-取下げエントリは製品情報を持たないことが正常であり，含めると付与率を不当に低く見せるためである\footnote{実例として，Fortinet採番のCVEには2025年に「Rejected reason: Not used」として一括取下げされたものが866件含まれる．除外しない場合Fortinetの付与率は32.8\%と算出されるが，除外後は99.6\%である．}．
+C2・C3の判定には\textbf{境界値法}を用いる．
+バージョン範囲を連続区間として比較すると，Fortinetの \texttt{<=6.4.15} とNVDの \texttt{versionEndExcluding: 6.4.16} のように実在する版の集合としては同一のものが「NVD側が広い」と誤判定されるためである．
+そこで (CVE, 製品) ごとに，一次データソースが影響ありとする版を\textbf{検知されるべき点}，修正版を\textbf{検知されるべきでない点}として，各点で相手側の条件の真偽が一致するかを評価する．
+製品の突合はCPEの製品部から区切り文字を除いた文字列で行い，版表現が解析できない組は除外した．
+さらに結果をCVEの採番元（NVDの \texttt{sourceIdentifier}）で層別する．Fortinet自身が採番したCVEと，Fortinet製品に組み込まれた部品に対して他者が採番したCVE（以下，\textbf{組込み部品のCVE}）ではNVDの振る舞いが大きく異なるためである．
 
-集計は，各エントリについて \texttt{configurations}（NVD）と \texttt{vcConfigurations}（VulnCheck独自）を走査し，\texttt{vulnerable: true} の \texttt{cpeMatch} の個数とバージョン指定の種別を数えることで行った．
-測定スクリプトは付録\ref{app:repro}に従い再現できる．
+C4はGit履歴から測る．スナップショットを1日2回取得しGitで履歴管理しており\cite{vuls-data-db}，履歴はNVDが2025年6月26日，VulnCheckが2025年8月6日以降利用できる．各CVEのファイルを辿り，\texttt{vulnerable} な \texttt{cpeMatch} が初めて現れたコミットの日付を求めた．
 
 \subsection{CPE適用条件の付与率の推移}
+\label{sec:year}
 
-表\ref{tab:year}に公開年別の解析状況とCPE適用条件の付与率を示す．
-「NVD付与率」は \texttt{configurations} に \texttt{vulnerable} な \texttt{cpeMatch} を1つ以上持つ割合，「VulnCheck付与率」は \texttt{configurations} または \texttt{vcConfigurations} のいずれかに持つ割合であり，「VC補完」はNVDが付与しておらずVulnCheckのみが付与している件数である．
+公開年別の解析状況を集計した．対象は2020〜2023年の92,362件，2024年39,957件，2025年48,162件，2026年44,809件（1月1日〜7月29日）である．
+
+\paragraph{(1) 2023年公開分までは付与率100\%である．}
+2016年から2023年までのいずれの年も，取下げを除く全エントリにCPE適用条件が付与されている．
+「報告件数が激増する前のNVDは信頼できるのか」という問いには，検知条件の\textbf{有無}という観点では完全に補われていると答えられる．記述内容が正しいかは別問題であり\cite{dong2019,nguyen2013}，\ref{sec:eval}章で評価する．
+
+\paragraph{(2) 2024年を境に急落し，待っても解消しない．}
+\texttt{configurations} に \texttt{vulnerable} な \texttt{cpeMatch} を1つ以上持つ割合は2024年80.5\%，2025年62.6\%，2026年56.1\%と低下し，低下分はほぼそのまま \texttt{Deferred} の増加（19.5\%，37.3\%，34.8\%）で説明される（2026年は別途9.3\%が解析待ちである）．
+付与率と解析完了率がほぼ一致することから，NVDにおける付与はエンリッチメント完了とほぼ同義である．
+\texttt{Deferred} の定義は「エンリッチメント予定に入っていない」であり，2025年公開分は公開から平均約1年半が経過してなお37.3\%が \texttt{Deferred} のままである．
+すなわち\textbf{2025年以降のNVDは，約4割弱が将来にわたって検知条件を供給されないと想定して設計すべき}である．
+未付与エントリの滞留も長く，\texttt{Awaiting Analysis} でも中位数43日・90\%点124日，\texttt{Deferred} の41,363件は中位数286日が経過している．
+\textbf{新規公開のCVEは，公開後1〜4か月はNVDの検知条件が存在しない前提で設計する必要がある}．
+
+\paragraph{(3) VulnCheckは補完するが埋め切らない．}
+\texttt{vcConfigurations} を加えると付与率は2024年88.3\%，2025年76.1\%，2026年78.5\%へ上がり，NVDが付与せずVulnCheckのみが付与したエントリは3,083件・6,492件・10,058件（同年の7.7\%・13.5\%・22.4\%）である．それでも2025年以降は2割強が両者ともに未付与である．
+VulnCheckの価値は，最終的な網羅性よりも公開直後の期間に集中する（\ref{sec:c4}節）．
+
+\subsection{付与された条件の粒度とCNA別の偏り}
+\label{sec:grain}
+
+\textbf{CPE適用条件が存在することとバージョンを特定できることは同じではない}．
+2024年以降に公開された132,928件のうち，バージョン範囲または特定バージョンで表現されているのはNVDで63.9\%，VulnCheckを加えて77.8\%にとどまる．
+同一エントリ内に両者が混在する例もあり，CVE-2024-6387（regreSSHion）ではVulnCheckが \texttt{openssh:openssh} に 8.5p1〜9.7p1 という適切な範囲を与える一方，\texttt{gnu:grub2:-} のようにバージョン指定を持たない条件も並ぶ．
+\textbf{付与率の向上が検知精度の向上を意味するとは限らない}．
+
+採番CNA別（\texttt{sourceIdentifier} による）の差は極端である．
+Microsoft 99.7\%，Fortinet 99.6\%，Apple 99.4\%と付与率がほぼ維持される一方，Cisco 77.2\%（\texttt{Deferred} 15.0\%），\textbf{JPCERT/CC採番は39.1\%（同59.7\%）}でVulnCheckを加えても48.4\%にとどまる．
+JPCERT/CCはJVNを通じて国内ベンダの脆弱性を採番する経路であり，\textbf{国内ベンダ製品の検知条件はNVDもVulnCheckもほぼ供給していない}．
+\texttt{Deferred} は無作為ではなく領域に偏って適用されている．
+またMicrosoftは付与率99.7\%に対しバージョン特定可能率が92.9\%と乖離する．WindowsのCPEはバージョン部が \texttt{-} で表現され，パッチ適用状態は更新プログラム（KB）情報に依存するためである．
+
+\subsection{一次データソースとの一致（C1〜C3）}
+\label{sec:c1c3}
+
+まずC1を見る．Fortinetの1,119件のアドバイザリのうち\textbf{37件はCVE IDを持たず}（2019年以前が中心），Ciscoの5,309件のうち\textbf{260件（4.9\%）が持たない}（2017年以前が中心）．CVE IDを持つもののうちNVDに存在しないものはFortinetで0件，Ciscoで8件である．
+CVE ID未採番のもの（C1a）はCVE制度の設計に起因するため，一次データソースを直接収集する以外に解決手段がない．
+
+C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採番656 CVE・1,135組と他者採番54 CVE・255組，CSAFが同168 CVE・298組と6 CVE・60組である．
 
 \begin{table*}[htbp]
-  \caption{公開年別のCPE適用条件の付与状況（取下げを除く）}
-  \ecaption{CPE applicability coverage by publication year (rejected entries excluded).}
-  \label{tab:year}
+  \caption{Fortinet一次データソースとの一致状況（境界値法による，単位\%．各セルは NVD / VulnCheck）}
+  \ecaption{Agreement with the Fortinet primary source (boundary-value method; each cell is NVD / VulnCheck).}
+  \label{tab:match}
   \begin{center}
-  \begin{tabular}{rrrrrrrr}
+  \begin{tabular}{llrrrrrr}
     \hline
-    公開年 & CVE件数 & 解析完了\% & 解析待ち\% & Deferred\% & NVD付与率\% & VulnCheck付与率\% & VC補完件数（\%） \\
+    基準 & 採番元 & 一致 & C2 製品欠落 & C3a 未検知 & C3b 過剰検知 & 未検知率 & 過剰検知率 \\
     \hline
-    2020 & 18,322 & 100.0 & 0.0 & 0.0 & 100.0 & 100.0 & 0 (0.0) \\
-    2021 & 20,149 & 100.0 & 0.0 & 0.0 & 100.0 & 100.0 & 0 (0.0) \\
-    2022 & 25,074 & 100.0 & 0.0 & 0.0 & 100.0 & 100.0 & 0 (0.0) \\
-    2023 & 28,817 & 100.0 & 0.0 & 0.0 & 100.0 & 100.0 & 0 (0.0) \\
-    2024 & 39,957 & 80.5 & 0.0 & 19.5 & 80.5 & 88.3 & 3,083 (7.7) \\
-    2025 & 48,162 & 62.6 & 0.0 & 37.3 & 62.6 & 76.1 & 6,492 (13.5) \\
-    2026$^\dagger$ & 44,809 & 55.9 & 9.3 & 34.8 & 56.1 & 78.5 & 10,058 (22.4) \\
+    CVRF & Fortinet & 63.3 / 75.0 & 18.7 / 11.3 & 18.1 / 13.7 & --- & 17.1 / 9.7 & --- \\
+    CVRF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & --- & 100.0 / 100.0 & --- \\
+    CSAF & Fortinet & 71.1 / \textbf{89.9} & 15.8 / \textbf{0.0} & 9.4 / 6.4 & 3.7 / 3.7 & 10.8 / \textbf{1.5} & 0.5 / 0.5 \\
+    CSAF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 59.2 / 59.2 & 0.0 / 0.0 \\
     \hline
   \end{tabular}
   \end{center}
   \footnotesize
-  $\dagger$ 2026年は1月1日〜7月29日（210日間）の公開分．
-  「解析完了」は \texttt{Analyzed} と \texttt{Modified} の合計，「解析待ち」は \texttt{Received}，\texttt{Awaiting Analysis}，\texttt{Undergoing Analysis} の合計．
+  一致・C2・C3a・C3bは(CVE,製品)組に対する割合，未検知率・過剰検知率は検証点に対する割合．
+  CVRFは修正版を持たないため過剰検知（C3b）を測定できず，製品情報を伴う2022年以降を対象とする．
 \end{table*}
 
-\paragraph{(1) 2023年公開分までは付与率100\%である．}
-2016年から2023年までのいずれの年も，取下げを除く全エントリにCPE適用条件が付与されている．
-「報告件数が激増する前のNVDは信頼できるのか」という問いに対し，少なくとも検知条件の\textbf{有無}という観点では，2023年公開分以前は完全に補われていると答えられる．
-ただし記述内容が正しいかは別問題であり，先行研究\cite{dong2019,nguyen2013}が指摘するとおり一致率は別途評価が必要である（7章）．
+\paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
+他者が採番したCVEについてC2は\textbf{100.0\%}である（CVRFで54 CVE・255組，CSAFで6 CVE・60組）．
+その99〜100\%は「当該CVEにCPEは付与されているが，Fortinet製品のCPEが1件も含まれない」ケースで，CVE-2024-6387（regreSSHion），CVE-2023-48795（Terrapin），CVE-2024-3596（RADIUS）などが該当する．
+Fortinetは自社製品が影響を受けることをアドバイザリで公表しているが，NVDのCPEには部品そのものの製品（\texttt{openbsd:openssh} 等）しか並ばない．
+\textbf{OSS部品を組み込んだ製品を検知しようとすると，この欠落がそのまま未検知になる}．
+\ref{sec:year}節の付与率にはこの欠落は一切現れない．
+VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの欠落を埋めていない．
 
-\paragraph{(2) 2024年を境に急落する．}
-付与率は2024年80.5\%，2025年62.6\%，2026年56.1\%と低下し，低下分はほぼそのまま \texttt{Deferred} の増加（19.5\%，37.3\%，34.8\%）で説明される．
-付与率と解析完了率がほぼ一致することから，NVDにおけるCPE適用条件の付与はエンリッチメント完了とほぼ同義であることも確認できる．
+\paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%にとどまる．}
+\ref{sec:grain}節でFortinetの付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
+C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースであり，FortiSOARやFortiClient Windows/Mac/Linux のように，Fortinetが区別する製品をNVDが列挙していないか異なる粒度で表す場合である．
+\textbf{付与率は検知可能性の上限にすぎない}．
+一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から\textbf{89.9\%}へ，C2を15.8\%から\textbf{0.0\%}へ，未検知率を10.8\%から\textbf{1.5\%}へ改善する．
+過剰検知率は0.5\%とNVDと同等であり，\textbf{本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった}．
+ただしこれは修正版を負例とした評価であり，\ref{sec:grain}節で見た粗いCPEの影響は\ref{sec:eval}章で改めて測る．
 
-\paragraph{(3) \texttt{Deferred} は待っても解消しない．}
-その定義は「エンリッチメント予定に入っていない」であり，時間が経てば付与される保証はない．
-2025年公開分は本稿執筆時点で公開から最短でも7か月，平均では約1年半が経過しているが，37.3\%が \texttt{Deferred} のままである．
-すなわち2025年以降のNVDについては，\textbf{約4割弱は将来にわたって検知条件が供給されないと想定して設計すべき}である．
+\subsection{C4：付与遅延}
+\label{sec:c4}
 
-\paragraph{(4) VulnCheckは補完するが埋め切らない．}
-独自エンリッチメントは付与率を2024年88.3\%，2025年76.1\%，2026年78.5\%へ引き上げ，補完件数は年を追って増加する（2026年は10,058件，22.4\%）．
-商用エンリッチメントの寄与は無視できない大きさである．
-一方で2025年以降は依然として2割強が両者ともに未付与である．
+公開から検知条件が初めて現れるまでの日数をGit履歴から測った\footnote{中位数／90\%点／打切り率の順に記す．全体はGit履歴開始以降に公開されたCVEから25件ごとに抽出した標本（NVD 2,773件，VulnCheck 2,549件），FortinetとCiscoは該当する全件である．}．
 
-なお，VulnCheckは2024年11月の記事で，2024年公開分のCPE付与率を自社76.95\%に対しNVD 41.35\%と報告している\cite{vulncheck-cpe}．
-同じ2024年公開分を本稿が2026年7月に観測すると，NVD 80.5\%・VulnCheck 88.3\%である．
-集計定義が同一とは限らないため厳密な比較ではないが，\textbf{NVDは公開直後は大きく遅れるものの，1年半をかけて差の多くを埋める}（両者の差は35.6ポイントから7.8ポイントへ縮小）ことを示唆する．
-一方で，そこから先は \texttt{Deferred} として残り続ける．
-したがってVulnCheckの価値は，最終的な網羅性よりも公開直後の期間に集中すると解釈できる．
+全体では，NVDは中位数7日・90\%点50日を要し\textbf{42.6\%が執筆時点でも未付与}であるのに対し，VulnCheckは中位数1日・90\%点11日で未付与は22.6\%にとどまる．
+\textbf{VulnCheckの価値は網羅性ではなく初動の速さにある}．
 
-公開月別のコホート（付録\ref{app:cohort}）で見ると，公開から約2年経過した2024年9月公開分は解析完了88.5\%・\texttt{Deferred} 11.5\%，公開から約7か月の2025年12月公開分は解析完了50.4\%・\texttt{Deferred} 49.6\%，公開から2週間の2026年7月公開分は解析完了33.5\%・解析待ち30.4\%・\texttt{Deferred} 36.0\%であった．
-時間経過とともに解析待ちは解消されるが，\texttt{Deferred} の割合は月によって25\%から50\%の幅で残る．
-
-\paragraph{(5) 未付与エントリは長く滞留する．}
-NVDがエンリッチメント対象と認識している \texttt{Awaiting Analysis} でも公開から中位数43日・90\%点124日が経過しており，\texttt{Deferred} の41,363件は中位数286日，うち32,215件が90日を超える（付録\ref{app:survey-detail}）．
-\textbf{新規に公開されたCVEについては，公開後1〜4か月はNVDの検知条件が存在しない前提で設計する必要がある}．
-これは，公開直後の脆弱性ほど攻撃に利用されやすいという性質と正面から衝突する．
-
-\subsection{付与された条件の粒度とCNA別の偏り}
-
-\textbf{CPE適用条件が存在することとバージョンを特定できることは同じではない}．
-2024年以降に公開された132,928件のうち，バージョン範囲または特定バージョンで表現されているのはNVDで63.9\%，VulnCheckを加えて77.8\%にとどまる（付録\ref{app:survey-detail}）．
-VulnCheckの \texttt{vcConfigurations} には両者が同一エントリ内に混在する例もある．
-CVE-2024-6387（regreSSHion）では \texttt{cpe:2.3:a:openssh:openssh} に 8.5p1〜9.7p1 という適切な範囲がある一方，\texttt{cpe:2.3:a:gnu:grub2:-} のようにバージョン指定を持たない条件が並び，そのまま用いれば当該製品を持つ全ホストが検知対象となる．
-\textbf{付与率の向上が検知精度の向上を意味するとは限らない}．
-
-採番CNA別に見ると差は極端である（付録\ref{app:survey-detail}）．
-Microsoft 99.7\%，Fortinet 99.6\%，Apple 99.4\%と付与率がほぼ維持される一方，Cisco 77.2\%（\texttt{Deferred} 15.0\%），\textbf{JPCERT/CC採番は39.1\%（\texttt{Deferred} 59.7\%）}でVulnCheckを加えても48.4\%にとどまる．
-JPCERT/CCはJVNを通じて国内ベンダの脆弱性を採番する経路であり，\textbf{国内ベンダ製品の検知条件はNVDもVulnCheckもほぼ供給していない}．
-NVDの \texttt{Deferred} は無作為ではなく領域に偏って適用されている．
-またMicrosoftは付与率99.7\%に対しバージョン特定可能率が92.9\%と乖離する．
-WindowsのCPEはバージョン部が \texttt{-} で表現され，パッチ適用状態は更新プログラム（KB）情報に依存するためである．
-
-\subsection{未付与時に残る情報：CNA提供のaffected}
-
-NVDがCPE適用条件を付与していない45,413件（2024年以降公開，取下げを除く）について代替情報の有無を調べた．
-結果は，CNA提供の \texttt{affected} が存在するもの45,413件（100.0\%），VulnCheckの \texttt{vcConfigurations} が存在するもの19,607件（43.2\%），いずれも存在しないもの0件であった．
-
-すなわち\textbf{製品情報そのものは常に存在し，欠けているのはCPEへの翻訳だけである}．
-しかしその内容はそのまま照合に使えない．実例を示す．
-
-\begin{description}
-  \item[CVE-2025-20271] \mbox{} \\
-    Cisco採番，2025-06-18公開，\texttt{Deferred}．\texttt{configurations} および \texttt{vcConfigurations} は空．\texttt{affected} は \texttt{\{"vendor": "Cisco", "product": "Cisco Meraki MX Firmware", "versions": [\{"version": "N/A", "status": "affected"\}]\}} のみで，バージョンが \texttt{N/A} である．一方Ciscoのアドバイザリ本体には修正済みバージョンが明記されている．
-  \item[CVE-2023-39933] \mbox{} \\
-    JPCERT/CC採番，2024-03-18公開，\texttt{Deferred}．\texttt{affected} は \texttt{\{"vendor": "A.K.I Software ", "product": "pmc.exe", "versions": [\{"version": "2.5.1.720 and earlier", "status": "affected"\}]\}}．バージョンが自然言語（\texttt{and earlier}）で記述され，ベンダ名には末尾空白が含まれる．
-\end{description}
-
-これらは，一次データソースへ遡り，自然言語のバージョン表記を機械可読な範囲式へ正規化する必要があることを示す．
-6章の提案はこの要求に応える．
+ベンダ間の差も大きい．アドバイザリ公開日を起点とすると，FortinetはNVDでも中位数3日・未付与1.1\%にすぎないのに対し，\textbf{Ciscoは中位数16日・90\%点85日で48.3\%が未付与}である（VulnCheckでも10.4\%が残る）．
+\ref{sec:grain}節の付与率もCisco 77.2\%，Fortinet 99.6\%であり，\textbf{付与率の低いベンダでは欠落だけでなく遅延も深刻である}．

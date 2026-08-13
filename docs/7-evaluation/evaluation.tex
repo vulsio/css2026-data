@@ -1,25 +1,26 @@
 \section{検知精度への影響の評価}
+\label{sec:eval}
 
-5章は検知条件そのものを比較した．
-本章はその差が実際のスキャン結果にどう現れるかを測る．
+\ref{sec:supply}章は一次データソースの全アドバイザリを走査して検知条件そのものを比較した．
+本章は製品とバージョンを10点選び，検知結果を比較する．
 
 \subsection{実験設定}
+\label{sec:setup}
 
-同一のスキャナ\cite{vuls}\footnote{Apple Security Releasesによる検知を含むビルド\cite{vuls-pr2635}を用いた．}に対し，入力データソースのみを変えた4種のデータベースを与える．
-\textbf{DB-primary} は一次データソース（Fortinet CVRF/CSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}，Microsoft MSRC\cite{msrc}，Apple Security Releases\cite{apple-sec}，Cisco openVuln API\cite{vuls-data-raw-cisco-json}，OpenSSH Security\cite{openssh-sec}），\textbf{DB-nvd} はNVDの \texttt{configurations}，\textbf{DB-vc} はVulnCheckの独自エンリッチメント（\texttt{vcConfigurations} と \texttt{vcVulnerableCPEs}），\textbf{DB-nvd+vc} は両者である．
-DB-vcにNVD由来の \texttt{configurations} は含めていない．VulnCheckが独自に何を足し何を誤るかを分離して測るためである．
+同一のスキャナ\cite{vuls}に，入力データソースのみを変えた4種のデータベースを与える．
+\textbf{DB-primary} は一次データソース（Fortinet CVRF/CSAF，Cisco openVuln API，MicrosoftのMSRC CVRF・Security Bulletin・更新プログラムカタログ・WSUSSCN2・更新プログラム記事，Apple Security Releases，OpenSSH Security），\textbf{DB-nvd} はNVDの \texttt{configurations}，\textbf{DB-vc} はVulnCheckの独自エンリッチメント（\texttt{vcConfigurations} と \texttt{vcVulnerableCPEs}），\textbf{DB-nvd+vc} は両者である．
+DB-vcにNVD由来の \texttt{configurations} は含めていない．VulnCheckが独自に何を足し何を誤るかを分離するためである．
 
-同一のスキャン結果を4つ複製し，データベースだけを変えて検知を実行した．
-スキャン対象はFortiOS 7.0.1（現行系）と5.2.0（サポート終了），Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6（High Sierra），Cisco IOS 15.6(1)T1とIOS XE 16.12.1，OpenSSH 8.5p1と9.6p1の10環境である．
-1台に複数の製品が載るため（macOSとSafari，WindowsとMicrosoft Edge），検知は照合されたCPEにより製品単位に割り当てて集計した．
-Microsoftの一次データソースのみ適用済みKBによる検知であり，CPEによる検知ではない\footnote{Windowsのスキャン結果は実機から取得した．他は宣言したCPEのみを持つ疑似サーバである．}．
-なお \texttt{apple:mac\_os\_x} は \texttt{apple:macos} に寄せて集計した．
-Apple自身は \texttt{macos} のみを用いるのに対しNVDは古いCVEを \texttt{mac\_os\_x} に置いており（macOS 10.13.6で686件），分けたままでは表記ゆれがそのままNVDの未検知として計上されるためである．
+同一のスキャン結果を4つ複製し，データベースだけを変えて検知した．
+対象はFortiOS 7.0.1と5.2.0，Cisco IOS 15.6(1)T1とIOS XE 16.12.1，Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6，OpenSSH 8.5p1と9.6p1の10環境である．
+1台に複数の製品が載るため（macOSとSafari，WindowsとMicrosoft Edge），検知は照合されたCPEにより製品単位に集計した（Safariの2行は本文で述べる）．
+Microsoftの一次データソースのみ適用済みKBによる検知であり，スキャン結果も実機から取得した（他は宣言したCPEのみを持つ疑似サーバである）．
+なお \texttt{apple:mac\_os\_x} は \texttt{apple:macos} に寄せた．NVDが古いCVEを前者に置いており，分けたままでは表記ゆれがNVDの未検知として計上されるためである．
 
-DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\textbf{過剰検知}とする．
-これは一次データソースを正解とみなす評価であり，一次データソース側の誤りは過剰検知として現れる．
+DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\textbf{過剰検知}とする．一次データソースを正解とみなす評価であり，その側の誤りは過剰検知として現れる．
 
 \subsection{結果}
+\label{sec:result}
 
 結果を表\ref{tab:detect}に示す．
 
@@ -41,8 +42,6 @@ DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\te
     Microsoft Edge 146 & 1,862 & \textbf{96.2} / 1.4 & 0.4 / 1.4 & 0.5 / 0.2 \\
     macOS 14.7.4 & 1,349 & 34.2 / 0.2 & 20.5 / 3.6 & 30.5 / 0.8 \\
     macOS 10.13.6 & 3,729 & 49.8 / 3.7 & 45.6 / 29.2 & 47.8 / 3.7 \\
-    Safari 18.3.1 & 163 & 16.6 / 34.9 & 3.1 / 86.5 & 2.5 / 31.8 \\
-    Safari 13.0.4 & 428 & 11.9 / 17.0 & 7.5 / 71.8 & 5.1 / 16.1 \\
     OpenSSH 8.5p1$^\ddagger$ & 7 & 14.3 / --- & \textbf{57.1} / --- & 14.3 / --- \\
     OpenSSH 9.6p1$^\ddagger$ & 5 & 20.0 / --- & \textbf{60.0} / --- & 0.0 / --- \\
     \hline
@@ -50,89 +49,80 @@ DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\te
   \end{center}
   \footnotesize
   未検知率は基準件数に対する割合，過剰検知率は当該DBの検知件数に対する割合．
-  Microsoft Edgeは2台のWindowsに同一バージョン（146.0.3856.109）が導入されており，スキャン対象としては同一のため1行にまとめた．
-  $\ddagger$ OpenSSHは一次データソースの網羅性がNVDに劣るため過剰検知率を定義できない（7.2節(7)）．未検知率の分母は基準件数の7件・5件である．
+  Microsoft Edgeは2台のWindowsに同一バージョンが導入されているため1行にまとめた．
+  $\ddagger$ OpenSSHは一次データソースの網羅性がNVDに劣るため過剰検知率を定義できない（\ref{sec:result}節(6)）．未検知率の分母は基準件数の7件・5件である．
 \end{table*}
 
-\paragraph{(1) 5章のC2（製品欠落）はそのまま未検知になる．}
-FortiOS 5.2.0ではDB-nvdの未検知率が\textbf{68.8\%}（108/157件）に達する．
-未検知108件の\textbf{93.5\%（101件）はFortinet以外が採番したCVE}であり，CVE-2004-0230，CVE-2009-3555，CVE-2014-3566（POODLE）のように，Fortinetが自社製品への影響を公表しているOSS部品の脆弱性である．
-現行系のFortiOS 7.0.1では未検知率10.1\%だが，その47.1\%はやはり他者採番である．
-5.4節でC2が100.0\%であった組込み部品の欠落が，長く運用されるバージョンほど累積して検知結果に現れる．
-
-\paragraph{(2) ただし組込み部品の欠落は，VulnCheckが埋める場合もある．}
-Microsoft Edgeでは逆にDB-nvdの未検知率が\textbf{96.2\%}（1,791/1,862件）であり，その99.9\%はChromeが採番したCVEである．
-NVDはChromiumの脆弱性に \texttt{google:chrome} のCPEしか付けず，これを取り込むMicrosoft Edgeを列挙しない．
+\paragraph{(1) 5章のC2（製品欠落）はそのまま未検知になるが，VulnCheckが埋める場合もある．}
+FortiOS 5.2.0ではDB-nvdの未検知率が\textbf{68.8\%}（108/157件）に達し，未検知108件の\textbf{93.5\%（101件）はFortinet以外が採番したCVE}である．
+CVE-2004-0230，CVE-2009-3555，CVE-2014-3566（POODLE）のように，Fortinetが自社製品への影響を公表しているOSS部品の脆弱性で，\ref{sec:c1c3}節でC2が100.0\%であった欠落が，長く運用されるバージョンほど累積して現れる（現行系の7.0.1では10.1\%）．
+Microsoft Edgeでは逆にDB-nvdの未検知率が\textbf{96.2\%}（1,791/1,862件）で，その99.9\%はChromeが採番したCVEである．
+NVDはChromiumの脆弱性に \texttt{google:chrome} のCPEしか付けず，これを取り込むEdgeを列挙しない．
 DB-vcはこれを0.4\%まで下げる．
-5.4節ではVulnCheckがFortinetの組込み部品を埋めなかったが，Edgeでは埋めている．
+\ref{sec:c1c3}節ではVulnCheckがFortinetの組込み部品を埋めなかった．
 \textbf{商用エンリッチメントが組込み部品を埋めるかどうかは，製品によって一貫しない}．
 
-\paragraph{(3) 自社採番のCVEでも，NVDはAppleを大きく取りこぼす．}
-macOS 14.7.4のDB-nvdの未検知率は34.2\%（462件）であり，そのうち\textbf{89.4\%（413件）はApple自身が採番したCVE}である．
-4.3節でAppleのCPE付与率は99.4\%と良好であったが，付与されているCPEが当該バージョンを覆っていない．
-一方で過剰検知率は0.2\%と低く，NVDは「狭すぎる」方向に誤る．
-Safariでは逆にDB-nvdの過剰検知率が34.9\%であり，誤りの向きは製品によって異なる．
+\paragraph{(2) 自社採番のCVEでも，NVDはAppleを大きく取りこぼす．}
+macOS 14.7.4のDB-nvdの未検知率は34.2\%（462件）で，そのうち\textbf{89.4\%（413件）はApple自身が採番したCVE}である．\ref{sec:grain}節でAppleの付与率は99.4\%と良好であったが，CPEが当該バージョンを覆っていない．
+一方で過剰検知率は0.2\%と低く，NVDは「狭すぎる」方向に誤る．同じホスト上のSafari 18.3.1では逆に過剰検知率が34.9\%（未検知率16.6\%）であり，誤りの向きは製品によって異なる．
 
-\paragraph{(4) VulnCheckの自動付与は，Windowsで大量の過剰検知を生む．}
+\paragraph{(3) VulnCheckの自動付与は，Windowsで大量の過剰検知を生む．}
 Windows 11 23H2に対しDB-vcはDB-primaryと\textbf{1件も一致せず}，835件を過剰に検知した（2020年485件，2019年333件）．
 原因はNVDの抽象CPEの展開である．
 例えばCVE-2007-1644に対しNVDは \texttt{cpe:2.3:o:microsoft:all\_windows:abstract\_cpe:*} という照合不能なプレースホルダを置いているが，VulnCheckはこれを具体的な製品へ展開し \texttt{windows\_11\_23h2:-} を付与している．
 2007年のWindows NT/2000のDNS脆弱性がWindows 11で検知される．
-この835件のうち833件はDB-nvd+vcでも抑制されず，過剰検知率は\textbf{70.6\%}に達する．
-VulnCheckのCPEが機械的に生成されている\cite{vulncheck-cpe}ことの帰結であり，付与率の高さが精度を意味しないことを示している．
+この835件のうち833件はDB-nvd+vcでも抑制されず，過剰検知率は\textbf{70.6\%}に達する．VulnCheckのCPEが機械的に生成されている\cite{vulncheck-cpe}ことの帰結である．
 
-\paragraph{(5) Ciscoでは，NVDが未検知と過剰検知の両方向に外す．}
-他の3ベンダではNVDの誤りは片方向に偏っていた（FortiOS 7.0.1と macOS は過剰検知率0.2\%以下）が，\textbf{Ciscoだけは両方が大きい}．
-IOS 15.6(1)T1で未検知率53.7\%・過剰検知率23.2\%，IOS XE 16.12.1で37.4\%・14.1\%である．
-しかもこの未検知は組込み部品ではない——IOS XEの未検知80件の\textbf{98.8\%（79件）はCisco自身が採番したCVE}である．
-原因は条件の書き方にある．
-NVDのCiscoのCPEは版の列挙が主体で，\texttt{cisco:ios} の67,803件の \texttt{cpeMatch} のうち範囲指定を持つものは131件にすぎない（\texttt{cisco:ios\_xe} は29,189件中182件）．
+\paragraph{(4) Ciscoでは，NVDが未検知と過剰検知の両方向に外す．}
+他の3ベンダではNVDの誤りは片方向に偏っていたが，\textbf{Ciscoだけは両方が大きい}（IOS 15.6(1)T1で未検知率53.7\%・過剰検知率23.2\%）．
+しかもこの未検知は組込み部品ではなく，IOS XEの未検知80件の\textbf{98.8\%（79件）はCisco自身が採番したCVE}である．
+原因は条件の書き方にある．NVDのCiscoのCPEは版の列挙が主体で，\texttt{cisco:ios} の67,803件の \texttt{cpeMatch} のうち範囲指定を持つものは131件にすぎない．
 \textbf{列挙から漏れた版はそのまま未検知になる}．
-4.3節でCiscoの付与率は77.2\%，5.5節で付与遅延は中位数16日・48.3\%未付与であった．
-供給が遅く粗いベンダでは，付与された条件の正しさも低い．
-
-過剰検知側は，一次データソースが当該版を挙げていないことによる．
-ただし内訳は一様でない．IOSの19件を個別に確認すると，Ciscoのアドバイザリ自体が存在しないものが9件，\texttt{Cisco IOS} とだけ書かれ版が無いものが3件，版は列挙しているが当該版を含まないものが5件，CiscoがIOSを影響製品として挙げていないもの（CVE-2006-3906はPIXとVPN Concentrator等のみ）が2件であった．
-版の欠落はCiscoのデータ全体に及び，\textbf{CPEに対応付く1,703件のアドバイザリのうち373件（21.9\%）は版を持つ製品名を1つも持たない}．
-すなわち過剰検知は，NVDが余分に挙げたものと，一次データソース側が版や製品を欠いているものの双方を含む．
+過剰検知側は，NVDが余分に版を挙げた場合と，Cisco側がアドバイザリを持たないか版を書いていない場合の双方を含む．後者はCisco全体に及び，\textbf{CPEに対応付く1,703件のアドバイザリのうち373件（21.9\%）は版を持つ製品名を1つも持たない}．
 \textbf{一次データソースの側にも，版の欠落と製品の粒度という2種類の不完全さがある}．
 
-\paragraph{(6) 供給源の信頼度に基づく抑制は，正しさとは相関しない．}
-Vulsは，NVD等を「検証済み」ソース，VulnCheckを「補助的」ソースとして扱い，検証済みソースが当該CVEに対しその製品のCPEを\textbf{定義してさえいれば}（バージョンが一致せず非検知であっても），補助的ソースの同一製品の検知を捨てる．
-このためDB-nvd+vcはDB-nvdとDB-vcの和集合にならない．
+\paragraph{(5) 供給源の信頼度に基づく抑制は，正しさとは相関しない．}
+Vulsは，検証済みソース（NVD等）が当該CVEに対しその製品のCPEを\textbf{定義してさえいれば}（バージョンが一致せず非検知であっても），補助的ソース（VulnCheck）の同一製品の検知を捨てるため，DB-nvd+vcはDB-nvdとDB-vcの和集合にならない．
 macOS 10.13.6ではVulnCheckの1,554件が抑制され，そのうち\textbf{781件はDB-primaryも検知している}（＝真陽性を捨てている）．
 逆にWindows 11 23H2では，抑制されずに通った833件のうちDB-primaryと一致するものは\textbf{0件}であった．
-\textbf{この抑制規則はNVDが製品を定義しているかだけで決まるため，正しさとは独立に働く}．
-VulnCheckのCPEが機械的に生成される以上この抑制は必要だが，その代償と限界は8章で述べる．
+\textbf{この抑制規則はNVDが製品を定義しているかだけで決まるため，正しさとは独立に働く}．その代償と限界は\ref{sec:limit}節で述べる．
 
-\paragraph{(7) OpenSSHでは，一次データソースを正解とみなす前提そのものが崩れる．}
+\paragraph{(6) OpenSSHでは，一次データソースを正解とみなす前提そのものが崩れる．}
 OpenSSHだけは一次データソースの検知件数（8.5p1で7件，9.6p1で5件）がNVD（24件，19件）を下回るため，過剰検知率を定義できない．
 DB-nvdのみが検知した18件・15件は\textbf{いずれも一次データソースにまったく現れず，すべてMITREが採番したCVE}であり，8.5p1では67\%，9.6p1では80\%が2026年公開分である．
-NVDが版を余分に挙げたのではなく，上流がそれらを脆弱性として記録していない．
-OpenSSH自身は10.5のリリースノートで，AIによる脆弱性報告が大量に寄せられており，その多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．
-すなわちここで観測されているのは，\textbf{何を脆弱性と数えるかについて，上流と第三者採番者の判断が割れている状態}である．
-6.5節で見たとおり一次データソースが優るのは影響範囲の精度であり，網羅性ではない．
-\textbf{どちらを正解とするかは事前に決められず，製品ごとに判断するほかない}．
-
-未検知の側は測れるが，内訳は性質が異なる3種に分かれる．
-DB-nvdが取りこぼしたのは各1件で，8.5p1では \texttt{OPENSSH-2023-02-02-2}——CVEが採番されておらず\textbf{NVDには原理的に存在し得ない}エントリ（5.1節のC1a）——，9.6p1ではCVE-2024-39894である．
-一方DB-vcは4件・3件を取りこぼし，そこにregreSSHion（CVE-2024-6387）とTerrapin（CVE-2023-48795）が含まれる．
-原因はベンダ名の不一致で，VulnCheckは \texttt{openssh:openssh}，NVDと一次データソースは \texttt{openbsd:openssh} を用いる（7.1節の \texttt{mac\_os\_x} と同種の表記ゆれである）．
+OpenSSH自身は10.5のリリースノートで，AIによる報告の多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．
+ここで観測されているのは\textbf{何を脆弱性と数えるかについて上流と第三者採番者の判断が割れている状態}であり，\textbf{どちらを正解とするかは事前に決められない}．
+未検知の側も内訳は異質である．DB-nvdの取りこぼしは各1件で，8.5p1では \texttt{OPENSSH-2023-02-02-2}——CVEが採番されておらず\textbf{NVDには原理的に存在し得ない}エントリ（\ref{sec:c1c3}節のC1a）——である．
+DB-vcは4件・3件を取りこぼし，そこにregreSSHion（CVE-2024-6387）とTerrapin（CVE-2023-48795）が含まれる．
+原因はベンダ名の不一致で，VulnCheckは \texttt{openssh:openssh}，NVDと一次データソースは \texttt{openbsd:openssh} を用いる（\ref{sec:setup}節の \texttt{mac\_os\_x} と同種である）．
 \textbf{同じ製品を指すCPEが供給源ごとに違うだけで，最も広く知られた脆弱性が検知されなくなる}．
 
-もう一種の誤りも観測された．
-NVDは，ディストリビューションが追加したパッチの脆弱性にも \texttt{openbsd:openssh} を紐付けている．
-CVE-2026-3497（Ubuntu採番）は説明文自身が「upstreamのOpenSSHには影響しない」と述べているが，NVDには \texttt{openbsd:openssh} のCPEがある（Red Hat採番のCVE-2026-55653〜55655も同様）．
-ただしいずれもバージョン部が \texttt{-} で範囲を伴わないため具体的な版とは照合されず，本稿の検知結果には現れていない．
-4.3節ではバージョン指定を持たない粗い条件が過剰検知を招くと述べたが，ここではその粗さが結果的に誤検知を防いでいる．
-\textbf{上流に影響しない脆弱性が上流の製品名で索引されている状態は残っており，NVDがここに版や範囲を書き込めば，そのまま過剰検知になる}．
-
 \subsection{どの時点までのNVDを信頼してよいか}
+\label{sec:trust}
 
-4章では2023年公開分までのNVDのCPE付与率は100\%であった．
-しかし検知結果で見ると，macOS 10.13.6に対するDB-nvdの未検知率は2023年以前のCVEで47.6\%，2024年45.2\%，2025年37.6\%，2026年85.4\%であり，古い年に絞っても改善しない．
+\ref{sec:year}節では2023年公開分までのNVDのCPE付与率は100\%であった．
+しかし検知結果で見ると，macOS 10.13.6に対するDB-nvdの未検知率は2023年以前のCVEで47.6\%，2024年45.2\%，2025年37.6\%であり，古い年に絞っても改善しない．
 FortiOS 5.2.0の未検知108件は\textbf{すべて2023年以前}のCVEである．
-逆にCiscoでは新しい年ほど悪く，IOS XEに対するDB-nvdの未検知率は2023年以前34.7\%，2025年46.3\%，\textbf{2026年は8件中8件（100\%）}である．
-DB-vcはこの2026年公開分を0\%まで下げており，5.5節で測ったCiscoの付与遅延（NVD 中位数16日に対しVulnCheck 1日）が検知結果にそのまま現れている．
-\textbf{「CVE増加前のNVDなら信頼してよい」という仮説は成り立たない}．
-4章の付与率の低下は2024年以降に生じた新しい問題だが，本章が示した未検知はそれ以前から存在しており，付与率では観測できない．
+\textbf{「CVE増加前のNVDなら信頼してよい」という仮説は成り立たない}．付与率の低下は2024年以降の新しい問題だが，ここでの未検知はそれ以前から存在しており付与率では観測できない．
+逆にCiscoでは新しい年ほど悪く，IOS XEに対する未検知率は2023年以前34.7\%に対し\textbf{2026年は8件中8件（100\%）}である．
+DB-vcはこの2026年公開分を0\%まで下げており，\ref{sec:c4}節で測ったCiscoの付与遅延（NVD 中位数16日に対しVulnCheck 1日）が検知結果にそのまま現れている．
+
+\subsection{限界と考察}
+\label{sec:limit}
+
+\paragraph{一次データソースを正解とみなす前提の限界．}
+本章の未検知率・過剰検知率はDB-primaryを正解とみなした値だが，一次データソースの側にも欠落がある．
+Ciscoでは版を持つ製品名を1つも持たないアドバイザリが21.9\%を占め（\ref{sec:result}節(4)），OpenSSHでは網羅性がNVDに劣る（同(6)）．
+またMicrosoftのみ検知方式が異なり（適用済みKB対CPE），他のベンダと同列には比較できない．
+結果はバージョンの選び方にも強く依存し，同じFortiOSでも7.0.1では未検知率10.1\%，5.2.0では68.8\%である．
+指標の側にも制約がある．製品の突合はCPEの製品部から区切り文字を除いた文字列で行うため，略称の差（\texttt{FortiClient Enterprise Management Server} と \texttt{forticlientems} 等）は吸収できず，表\ref{tab:match}のC2にはこの対応付けの失敗が含まれる可能性がある．
+「自社採番か組込み部品か」の判定はNVDの \texttt{sourceIdentifier} を代理指標としており，採番CNA以外に由来する識別子が含まれうる．
+
+\paragraph{供給源の信頼度による抑制の代償と限界．}
+VulnCheckのCPEは機械的に生成されるため，Microsoft Edgeのようにうまく機能するものとWindowsのように大量の偽陽性を生むものが混在する（\ref{sec:result}節(1)(3)）．Vulsが抑制規則を置いているのはこのためであり，規則そのものは必要な妥協である．
+本稿が測ったのはその代償（macOS 10.13.6で真陽性781件の切り捨て）と限界（Windows 11 23H2の偽陽性833件がすり抜ける）であり，後者はNVDが置いた抽象CPE（\texttt{all\_windows}）とVulnCheckが展開した具体CPE（\texttt{windows\_11\_23h2}）が別製品として扱われるために起きる．
+規則を緩めれば前者は救えるが後者は悪化する．必要なのは信頼度の調整ではなく，照合不能な抽象CPEをソース側で明示的に扱うことだと考えられる．
+
+\paragraph{LLM利用に伴うリスク．}
+\ref{sec:llm}章のP1・P2は非決定性を生成時に閉じ込めるが，P3はデータ経路にLLMが残るため，キャッシュと検証器に決定性を依存する．
+いずれの検証器も形式的な整合性を確認できるが「原文の意味を正しく解釈したか」は保証しない．\ref{sec:p3}節のCVE IDの対応付けはその典型で，引用が出典に逐語で存在することは検査できても，その出典が当該エントリのものかは検査できない．

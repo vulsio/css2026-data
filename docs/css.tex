@@ -24,6 +24,17 @@
 %% 振っているため，level 3 以下には番号を付けない。
 \setcounter{secnumdepth}{2}
 
+%% 段抜きフロート（table*）が単独でページを占有するのを防ぐ。
+%% 既定の \dblfloatpagefraction=0.5 では，ページの半分を超える表が
+%% フロート専用ページへ送られ，本文が入らなくなる。
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.8}
+
 \begin{document}
 
 %% 本文が和文の場合，タイトル・著者名・著者所属・概要は，和文・英文共に必須．
@@ -79,23 +90,13 @@ Vulnerability Detection, Vulnerability Database, NVD, Primary Data Source, Large
 \maketitle
 
 \input{./1-introduction/intro.tex}
-\input{./2-background/background.tex}
 \input{./3-related/related.tex}
 \input{./4-survey/survey.tex}
-\input{./5-comparison/comparison.tex}
 \input{./6-method/method.tex}
 \input{./7-evaluation/evaluation.tex}
-\input{./8-discussion/discussion.tex}
 \input{./9-conclusion/conclusion.tex}
 
 \bibliographystyle{junsrt}
 \bibliography{./refs.bib}
-
-%% 研究倫理に関する記載はページ数制限の対象外．付録の前に置く．
-\input{./ethics/ethics.tex}
-
-%% 付録は本文の後ろ，最大5ページ．
-\appendix
-\input{./appendix/appendix.tex}
 
 \end{document}
