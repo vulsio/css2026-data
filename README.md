@@ -2,13 +2,35 @@
 
 CSS2026 OWSトラック投稿論文「脆弱性検知条件の供給源の再検討」の原稿と、測定に用いたデータ・スクリプト。
 
-- 原稿: [`paper/css2026-ows.md`](paper/css2026-ows.md)
-- 測定スクリプト: [`paper/analysis/`](paper/analysis/)
-- LaTeX一式: [`docs/`](docs/)
+| | |
+|---|---|
+| 原稿（LaTeX） | [`docs/`](docs/) — `docs/css.tex` が本体。`cd docs && latexmk css.tex` でビルドする |
+| 集計スクリプト | [`data/analysis/`](data/analysis/) — 3章の調査と、5章の検知結果の集計 |
+| 検知実験一式 | [`data/`](data/) — DB・スキャン結果・検知スクリプト。詳細は [`data/README.md`](data/README.md) |
 
-## 実験データのスナップショット
+論文は本文8ページ（参考文献含む）で、章立ては次のとおり。
 
-論文中の数値はすべて下記スナップショットから算出している。データ本体は `.gitignore` により本リポジトリには含めないため、**再検証にはこのcommit hashを指定して取得すること**。
+| 章 | 内容 | 対応する成果物 |
+|---|---|---|
+| 3 | 検知条件の供給実態の定量調査 | `data/analysis/` の集計スクリプト |
+| 4 | 一次データソースの構造化（LLMの3パターン） | vuls-data-update の各PR（原稿の参考文献を参照） |
+| 5 | 検知精度への影響の評価 | `data/` の検知実験 + `data/analysis/detect_eval.py` |
+
+## データのスナップショットは2系統ある
+
+同じ `ghcr.io/vulsio/vuls-data-db` を使うが、**用途ごとに別のスナップショットを固定している**。
+
+| 用途 | 形式 | 記録場所 | 実体の置き場所 |
+|---|---|---|---|
+| 3章の集計 | raw アーティファクト | 下記の表 | `ghcr.io/vulsio/vuls-data-db/`（`.gitignore` 済み） |
+| 5章の検知 | extracted から作った vuls DB | [`data/sources.tsv`](data/sources.tsv) | `data/db/vuls.*.db.zst`（**commit 済み**） |
+
+検知だけをやり直すなら、commit してある `.db.zst` を展開すれば足りる（`data/README.md` を参照）。
+以下の表が要るのは、3章の集計をやり直すときだけである。
+
+### 3章の集計に用いたスナップショット
+
+論文中の数値はすべて下記から算出している。データ本体は `.gitignore` により本リポジトリには含めないため、**再検証にはこのcommit hashを指定して取得すること**。
 
 - 取得先: `ghcr.io/vulsio/vuls-data-db`（各行の source がOCIアーティファクトのタグ名）
 - 配置先: `ghcr.io/vulsio/vuls-data-db/<source>/`（Zstandardで展開すると `.git/` のみのディレクトリになるので、`git -C <dir> checkout <commit>` で任意時点に復元できる）
@@ -31,50 +53,57 @@ CSS2026 OWSトラック投稿論文「脆弱性検知条件の供給源の再検
 この表は下記で再生成・照合できる。
 
 ```sh
-sh paper/analysis/dataset-manifest.sh
+sh data/analysis/dataset-manifest.sh
 ```
 
-### 論文中で実際に使用しているもの
+このうち3章の数値に直接使っているのは次の5つである。
 
 | source | 用いた箇所 |
 |---|---|
-| vuls-data-raw-nvd-feed-cve-v2 | 4章全体、5章の比較対象、C4のGit履歴 |
-| vuls-data-raw-vulncheck-nist-nvd2 | 4章全体、5章の比較対象、C4のGit履歴 |
-| vuls-data-raw-fortinet-cvrf / -csaf | 5章 C1〜C4（一次データソースの基準） |
-| vuls-data-raw-cisco-json | 5章 C1・C4 |
+| vuls-data-raw-nvd-feed-cve-v2 | 3.2節・3.3節、3.4節と3.5節の比較対象、C4のGit履歴 |
+| vuls-data-raw-vulncheck-nist-nvd2 | 同上 |
+| vuls-data-raw-fortinet-cvrf / -csaf | 3.4節・3.5節（一次データソースの基準） |
+| vuls-data-raw-cisco-json | 3.4節のC1、3.5節のC4 |
 
-microsoft-\*、mitre-cve-v5、enisa-euvd-list は取得済みだが本稿の数値には未使用（Microsoftは今後の測定対象）。
+mitre-cve-v5、enisa-euvd-list は取得済みだが数値には未使用。
+microsoft-\* は3章では使っていないが、5章の検知で `vuls.microsoft.db` の材料として使う（そちらのスナップショットは `data/sources.tsv` 側で固定している）。
 
-### 使用していないデータ
-
-`vuls-data-raw-fortinet`（FortiGuard PSIRTのHTMLを変換したもの）は**一次データソースの基準として採用していない**。FortinetのCVRF/CSAFの更新に追従できておらず、2018〜2023年公開分ではノードの51%でバージョンが空になる（実際のアドバイザリには記載がある。例: [FG-IR-20-036](https://www.fortiguard.com/psirt/FG-IR-20-036) は「FortiAnalyzer 6.4.0, 6.2.3 and below」と明記）。詳細は原稿5.2節および8章を参照。
-
-## 基準日
+### 基準日
 
 スナップショットの基準日は、NVDデータセット中の `lastModified` の最大値である **2026-07-29** とした。C4（付与遅延）の測定に使えるGit履歴の開始は、NVDが2025-06-26、VulnCheckが2025-08-06。
+
+## 3章の集計をやり直す
+
+```sh
+cd data/analysis
+python3 extract.py          # 全CVEのメタデータをCSVへ（約1分。他スクリプトの入力）
+python3 agg3.py             # 3.2節（公開年別の付与率）、3.3節のCNA別、滞留日数
+python3 extract2.py         # 3.3節（バージョン特定可能率、粒度）
+python3 fortinet_c123.py    # 表1（Fortinet基準の C1〜C3）
+python3 cisco_c14.py        # 3.4節 Cisco の C1
+python3 c4.py 25            # 3.5節 全体（引数は標本の間引き幅）
+python3 fortinet_c4.py      # 3.5節 Fortinet
+python3 cisco_c4.py         # 3.5節 Cisco
+```
+
+各スクリプトの出力は同名の `.out` として commit してあるので、`diff` で照合できる。
+データルートは各スクリプトの `BASE` で、リポジトリルート直下の `ghcr.io/vulsio/vuls-data-db` を指す（`__file__` からの相対で解決するのでclone先に依存しない）。
+
+## 5章の検知結果をやり直す
+
+DBもスキャン結果も commit してあるので、検知のやり直しだけで再現できる。
+
+```sh
+sh data/bin/unpack-db.sh        # commit 済みの .db.zst と vuls バイナリを展開
+sh data/bin/detect.sh           # 4つのDBそれぞれで検知し直す
+python3 data/analysis/detect_eval.py   # 表2 の集計
+```
+
+DBの作り直し、スキャン結果の内訳、vuls のビルド手順は [`data/README.md`](data/README.md) を参照。
 
 ## 実行環境
 
 - Python 3.10.5（標準ライブラリのみ）
 - git（`git log --name-only` と `git cat-file --batch` を使用）
-
-## 再現手順
-
-詳細は原稿の付録Aを参照。概略は次のとおり。
-
-```sh
-cd paper/analysis
-python3 extract.py          # 全CVEのメタデータをCSVへ（約1分）
-python3 agg3.py             # 表1・表2・表4、4.6節
-python3 extract2.py         # 表3、表4のバージョン特定可能率
-python3 fortinet_c123.py    # 表5（C1〜C3、CVRF/CSAF基準）
-python3 cisco_c14.py        # 5.3節 Cisco の C1
-python3 c4.py 25            # 表6 全体行
-python3 fortinet_c4.py      # 表6 Fortinet行
-python3 cisco_c4.py         # 表6 Cisco行
-python3 detect_eval.py      # 表8（7章の検知結果の比較）
-```
-
-7章の検知結果そのものの取り直しは [`data/README.md`](data/README.md) を参照。
-
-データルートは `paper/analysis/c123b.py` の `BASE` で定義している。
+- zstd（`data/bin/unpack-db.sh` が使用）
+- LaTeX（原稿のビルド。`docs/GNUmakefile` は Docker イメージ `paperist/alpine-texlive-ja` を使う）

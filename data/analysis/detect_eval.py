@@ -9,7 +9,7 @@ Windows と Microsoft Edge）、検知を製品単位に割り当ててから集
 CPE で検知したものは cpeURIs から、Microsoft の slot 00（KB による検知）は
 affectedPackages の名前から製品を決める。
 
-    python3 paper/analysis/detect_eval.py
+    python3 data/analysis/detect_eval.py
 """
 
 import collections
@@ -17,7 +17,7 @@ import json
 import pathlib
 import re
 
-BASE = pathlib.Path(__file__).resolve().parents[2] / "data"
+BASE = pathlib.Path(__file__).resolve().parents[1]
 SLOTS = [("00", "primary"), ("01", "NVD"), ("02", "VulnCheck"), ("03", "NVD+VC")]
 RESULT_DATE, RESULT_TZ = "2026-08-01", "+0900"
 

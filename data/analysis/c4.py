@@ -5,13 +5,15 @@ import csv
 import datetime as dt
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import threading
 from collections import defaultdict
 
 SP = "/tmp/claude-1000/-home-mainek00n-github-github-com-vulsio-css2026-data/37e4581d-b165-4be5-a3b7-036152d3298a/scratchpad"
-BASE = "/home/mainek00n/github/github.com/vulsio/css2026-data/ghcr.io/vulsio/vuls-data-db"
+BASE = str(pathlib.Path(__file__).resolve().parents[2]
+           / "ghcr.io/vulsio/vuls-data-db")
 REPOS = {
     "NVD": (os.path.join(BASE, "vuls-data-raw-nvd-feed-cve-v2"), ["configurations"]),
     "VulnCheck": (os.path.join(BASE, "vuls-data-raw-vulncheck-nist-nvd2"),

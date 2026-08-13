@@ -1,6 +1,6 @@
 #!/bin/sh
 # Regenerate/verify the dataset manifest recorded in README.md.
-# Usage:  sh paper/analysis/dataset-manifest.sh [<data-root>]
+# Usage:  sh data/analysis/dataset-manifest.sh [<data-root>]
 # Default data root is ./ghcr.io/vulsio/vuls-data-db
 root="${1:-ghcr.io/vulsio/vuls-data-db}"
 printf '%-34s %-40s %-20s %s\n' source commit "committed(UTC)" json_files

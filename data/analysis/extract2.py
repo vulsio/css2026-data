@@ -2,10 +2,12 @@
 """Granularity of detection conditions + per-vendor drill-down (published >= 2024)."""
 import json
 import os
+import pathlib
 from collections import Counter, defaultdict
 from multiprocessing import Pool
 
-BASE = "/home/mainek00n/github/github.com/vulsio/css2026-data/ghcr.io/vulsio/vuls-data-db"
+BASE = str(pathlib.Path(__file__).resolve().parents[2]
+           / "ghcr.io/vulsio/vuls-data-db")
 NVD = os.path.join(BASE, "vuls-data-raw-nvd-feed-cve-v2")
 VC = os.path.join(BASE, "vuls-data-raw-vulncheck-nist-nvd2")
 DIRS = sorted(y for y in __import__("os").listdir(NVD) if y.isdigit())
