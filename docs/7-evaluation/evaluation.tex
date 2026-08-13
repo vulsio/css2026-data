@@ -5,12 +5,12 @@
 
 \subsection{実験設定}
 
-同一のスキャナ\cite{vuls}に対し，入力データソースのみを変えた4種のデータベースを与える．
-\textbf{DB-primary} は一次データソース（Fortinet CVRF/CSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}，Microsoft MSRC\cite{msrc}，Apple Security Releases\cite{apple-sec}，Cisco openVuln API\cite{vuls-data-raw-cisco-json}），\textbf{DB-nvd} はNVDの \texttt{configurations}，\textbf{DB-vc} はVulnCheckの独自エンリッチメント（\texttt{vcConfigurations} と \texttt{vcVulnerableCPEs}），\textbf{DB-nvd+vc} は両者である．
+同一のスキャナ\cite{vuls}\footnote{Apple Security Releasesによる検知を含むビルド\cite{vuls-pr2635}を用いた．}に対し，入力データソースのみを変えた4種のデータベースを与える．
+\textbf{DB-primary} は一次データソース（Fortinet CVRF/CSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}，Microsoft MSRC\cite{msrc}，Apple Security Releases\cite{apple-sec}，Cisco openVuln API\cite{vuls-data-raw-cisco-json}，OpenSSH Security\cite{openssh-sec}），\textbf{DB-nvd} はNVDの \texttt{configurations}，\textbf{DB-vc} はVulnCheckの独自エンリッチメント（\texttt{vcConfigurations} と \texttt{vcVulnerableCPEs}），\textbf{DB-nvd+vc} は両者である．
 DB-vcにNVD由来の \texttt{configurations} は含めていない．VulnCheckが独自に何を足し何を誤るかを分離して測るためである．
 
 同一のスキャン結果を4つ複製し，データベースだけを変えて検知を実行した．
-スキャン対象はFortiOS 7.0.1（現行系）と5.2.0（サポート終了），Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6（High Sierra），Cisco IOS 15.6(1)T1とIOS XE 16.12.1の8環境である．
+スキャン対象はFortiOS 7.0.1（現行系）と5.2.0（サポート終了），Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6（High Sierra），Cisco IOS 15.6(1)T1とIOS XE 16.12.1，OpenSSH 8.5p1と9.6p1の10環境である．
 1台に複数の製品が載るため（macOSとSafari，WindowsとMicrosoft Edge），検知は照合されたCPEにより製品単位に割り当てて集計した．
 Microsoftの一次データソースのみ適用済みKBによる検知であり，CPEによる検知ではない\footnote{Windowsのスキャン結果は実機から取得した．他は宣言したCPEのみを持つ疑似サーバである．}．
 なお \texttt{apple:mac\_os\_x} は \texttt{apple:macos} に寄せて集計した．
@@ -43,12 +43,15 @@ DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\te
     macOS 10.13.6 & 3,729 & 49.8 / 3.7 & 45.6 / 29.2 & 47.8 / 3.7 \\
     Safari 18.3.1 & 163 & 16.6 / 34.9 & 3.1 / 86.5 & 2.5 / 31.8 \\
     Safari 13.0.4 & 428 & 11.9 / 17.0 & 7.5 / 71.8 & 5.1 / 16.1 \\
+    OpenSSH 8.5p1$^\ddagger$ & 7 & 14.3 / 75.0 & 57.1 / 96.8 & 14.3 / 76.9 \\
+    OpenSSH 9.6p1$^\ddagger$ & 5 & 20.0 / 78.9 & 60.0 / 97.9 & \textbf{0.0} / 77.3 \\
     \hline
   \end{tabular}
   \end{center}
   \footnotesize
   未検知率は基準件数に対する割合，過剰検知率は当該DBの検知件数に対する割合．
   Microsoft Edgeは2台のWindowsに同一バージョン（146.0.3856.109）が導入されており，スキャン対象としては同一のため1行にまとめた．
+  $\ddagger$ OpenSSHは一次データソースが挙げるCVEがNVDより少ないため，過剰検知率は他の行と同じ意味を持たない（7.2節(7)）．
 \end{table*}
 
 \paragraph{(1) 5章のC2（製品欠落）はそのまま未検知になる．}
@@ -101,6 +104,15 @@ macOS 10.13.6ではVulnCheckの1,554件が抑制され，そのうち\textbf{781
 逆にWindows 11 23H2では，抑制されずに通った833件のうちDB-primaryと一致するものは\textbf{0件}であった．
 \textbf{この抑制規則はNVDが製品を定義しているかだけで決まるため，正しさとは独立に働く}．
 VulnCheckのCPEが機械的に生成される以上この抑制は必要だが，その代償と限界は8章で述べる．
+
+\paragraph{(7) OpenSSHでは，一次データソースを正解とみなす前提そのものが崩れる．}
+OpenSSHだけは一次データソースの検知件数（8.5p1で7件，9.6p1で5件）がNVD（24件，19件）を下回る．
+そのため過剰検知率が75〜79\%と算出されるが，これはNVDが誤っているという意味ではない．
+内訳を見ると，DB-nvdのみが検知した18件・15件は\textbf{いずれも一次データソースにまったく現れず，すべてMITREが採番したCVE}であり，8.5p1では67\%，9.6p1では80\%が2026年公開分である．
+OpenSSH自身は10.5のリリースノートで，AIによる脆弱性報告が大量に寄せられており，その多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．
+すなわちここで観測されているのは，\textbf{何を脆弱性と数えるかについて，上流と第三者採番者の判断が割れている状態}である．
+6.5節で見たとおり一次データソースが優るのは影響範囲の精度であり，網羅性ではない．
+\textbf{どちらを正解とするかは事前に決められず，製品ごとに判断するほかない}．
 
 \subsection{どの時点までのNVDを信頼してよいか}
 

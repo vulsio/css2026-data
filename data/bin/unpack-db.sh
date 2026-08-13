@@ -28,5 +28,16 @@ for db in $(all_dbs); do
 	zstd -d -f -q -o "$out" "$zst"
 done
 
+# 検知に使う vuls 本体も同じ要領で展開する
+if [ -f "$DATA_DIR/vuls.zst" ]; then
+	if [ "$FORCE" -eq 1 ] || [ ! -f "$VULS" ] || [ "$VULS" -ot "$DATA_DIR/vuls.zst" ]; then
+		log "unpack vuls"
+		zstd -d -f -q -o "$VULS" "$DATA_DIR/vuls.zst"
+		chmod +x "$VULS"
+	else
+		log "skip vuls (展開済み)"
+	fi
+fi
+
 log "done"
 ls -l "$DB_DIR"/vuls.*.db

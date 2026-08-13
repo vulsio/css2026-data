@@ -22,3 +22,8 @@ paper/analysis/*.csv
 
 # detect 用の vuls 設定は data/bin/detect.sh が生成する
 data/*/config.*.toml
+
+# 検知に使う vuls v1 のバイナリ。commit してあるのは data/vuls.zst の方で、
+# 展開後の data/vuls は無視する（data/bin/unpack-db.sh が展開する）
+data/vuls
+!data/vuls.zst

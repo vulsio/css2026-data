@@ -11,7 +11,7 @@ VULS="${VULS:-$DATA_DIR/vuls}"
 
 # 検証対象ベンダ。増やすときは data/<vendor>/results/<slot>/ にスキャン結果を置き、
 # data/db/vuls.<vendor>.db.zst を用意して、ここに足す（一次データソース DB 名 = ベンダ名）。
-VENDORS="${VENDORS:-fortinet microsoft apple cisco}"
+VENDORS="${VENDORS:-fortinet microsoft apple cisco openssh}"
 
 # results/ のスロット。slot:db の対応で、slot が結果ディレクトリ名の連番になる。
 #   00 = 一次データソース DB / 01 = NVD / 02 = VulnCheck / 03 = NVD+VulnCheck

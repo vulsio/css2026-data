@@ -7,6 +7,7 @@
 #               同じ DB に複数行が該当する場合、この表の上から順に `vuls db add` している。
 #   kind    ... extracted = ghcr の extracted アーティファクトをそのまま使う
 #               raw       = raw アーティファクトを取得し、手元で extract する
+#               local     = ghcr に無く、手元の fetch + 変換 + extract で作る（OpenSSH）
 #   tag     ... ghcr.io/vulsio/vuls-data-db の tag
 #   commit  ... その tag の dotgit を checkout した commit（ここが再現性の要）
 #   extract ... kind=raw のときの `vuls-data-update extract <extract>` サブコマンド名
@@ -23,3 +24,4 @@ apple	raw	vuls-data-raw-apple-security-releases	8bd4cca986e8e963044cbf3d2cc7143f
 nvd,nvd-vulncheck	extracted	vuls-data-extracted-nvd-feed-cve-v2	3ebfaa23f8286be2ffd2b534be9b41c04f335d65	-
 vulncheck,nvd-vulncheck	extracted	vuls-data-extracted-vulncheck-nist-nvd2	2e1a73233046bb66cc3f6b09a4cf381ed2c5d96d	-
 cisco	extracted	vuls-data-extracted-cisco-json	abfec52a22a260f901fa394a67610a18fac5982b	-
+openssh	local	vuls-data-extracted-openssh-security	-	openssh-security

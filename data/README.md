@@ -14,7 +14,7 @@
 選ぶため、同じスキャン結果を 4 つに複製して別々の DB で検知させるための連番である。
 `scannedCves` 以外は 4 つとも同一なので、差分はすべて DB の違いに由来する。
 
-対象は Fortinet / Microsoft / Apple / Cisco の 4 ベンダ。
+対象は Fortinet / Cisco / Microsoft / Apple / OpenSSH の 5 ベンダ。
 
 ### slot 02 と slot 03 は足し算にならない
 
@@ -40,15 +40,17 @@ VulnCheck 側の同じ製品の検知は捨てられる（`collectVerifiedProduc
 ## やり直し方
 
 ```sh
-sh data/bin/unpack-db.sh          # commit 済みの .db.zst を展開（初回のみ）
+sh data/bin/unpack-db.sh          # commit 済みの .zst を展開（初回のみ）
 sh data/bin/detect.sh             # 4 slot ぶん検知し直す
 python3 data/bin/summary.py       # 結果を突き合わせて表示
 ```
 
 ベンダを指定するなら `sh data/bin/detect.sh fortinet` のように引数を渡す。
 
-- 検知に使う vuls（v1）はリポジトリ同梱の `data/vuls`。別のビルドを使うなら
-  `VULS=/path/to/vuls sh data/bin/detect.sh`。
+- 検知に使う vuls（v1）は `data/vuls.zst` として commit してある。`unpack-db.sh` が
+  DB と一緒に `data/vuls` へ展開して実行権を付けるので、ビルドは不要
+  （別のビルドを使うなら `VULS=/path/to/vuls sh data/bin/detect.sh`）。
+  自分でビルドしたい場合は後述の「vuls をビルドし直す」を参照。
 - `data/<vendor>/config.<db>.toml` は `detect.sh` が毎回生成する。DB パスは
   リポジトリルートからの相対にしてあるので clone 先に依存しない（そのため
   `detect.sh` はルートを cwd にして vuls を呼ぶ）。手で編集しても上書きされる。
@@ -60,8 +62,8 @@ python3 data/bin/summary.py       # 結果を突き合わせて表示
 スキャンは済んでいて、やり直す必要はない。`<vendor>/results/**.json` の
 `config.scan.servers` に、どのサーバをどの CPE で見立てたかが残っている。
 
-- Fortinet / Apple / Cisco、および Microsoft の slot 01〜03 は vuls v1 の pseudo スキャン
-  （`cpeNames` を宣言しただけの仮想サーバ）。
+- Fortinet / Cisco / Apple / OpenSSH、および Microsoft の slot 01〜03 は vuls v1 の
+  pseudo スキャン（`cpeNames` を宣言しただけの仮想サーバ）。
 - Microsoft の slot 00 だけは実機 Windows のスキャン結果。適用済み KB で検知する
   ため CPE では代用できず、実機を用意しない限り取り直せない。
   ここを pseudo スキャンで上書きしないこと。
@@ -73,9 +75,8 @@ python3 data/bin/summary.py       # 結果を突き合わせて表示
 
 必要なツール:
 
-- `vuls-data-update` … `github.com/MaineK00n/vuls-data-update` の
-  `feat-extract-apple`（`0bc5a77d9b410c054007a3cb8fa20065a85a416f`）。
-  Apple Security Releases の fetch / extract がまだ本流に入っていないため。
+- `vuls-data-update` … Apple と OpenSSH の fetch / extract がまだ本流に入っていないため、
+  2 本のブランチをマージしたものが要る（下記「vuls をビルドし直す」と同じマージ）。
 - `vuls`（nightly / vuls2）… `github.com/MaineK00n/vuls2`
   （`663ae1050b94a610d00c569a3dab1503a07e8a65`）。DB の init / add / compress に使う。
 
@@ -97,12 +98,51 @@ vuls db compress --dbpath data/db/vuls.<name>.db   # .db を compact し .db.zst
 
 `ghcr.io/vulsio/vuls-data-db:vuls-data-extracted-apple-security-releases` は空の
 プレースホルダなので、apple だけは raw から extract する必要がある。
+OpenSSH は raw の `raw/` をモデルによる変換で作る構成のため、fetch だけでは
+再生成できない（詳細は vuls-data-update の PR #928 を参照）。
+
+## vuls をビルドし直す
+
+通常は不要（`data/vuls.zst` を commit してある）。同梱バイナリは
+`-trimpath -ldflags "-s -w"` で strip したもので、strip の有無で検知結果は変わらない
+ことを確認している。
+
+Apple と OpenSSH の検知はいずれも未マージの PR に載っており、**両方を含むコミットが
+上流に存在しない**ため、2 つのリポジトリでそれぞれ 2 本のブランチをマージする必要がある。
+
+| リポジトリ | マージするブランチ | PR |
+|---|---|---|
+| MaineK00n/vuls-data-update | `feat-extract-apple` + `MaineK00n/openssh-security` | #917 / #928 |
+| future-architect/vuls | `MaineK00n/apple-security-releases` + `MaineK00n/openssh-security` | #2635 / #2636 |
+
+どちらのマージも衝突は「両方採る」で解決できるが、Apple 側の `case` 本体が衝突境界で
+途中まで取り込まれるので、次の 2 箇所だけ手当てが要る。
+
+- vuls-data-update `range.go` の `CompareVersions`: Apple の `case` に
+  `return va.Compare(vb), nil` を戻す
+- vuls `detector/vuls2/vendor.go` の参照リンク: Apple の `case` に
+  `RefID: da.AdvisoryID,` と閉じ括弧を戻す
+
+```sh
+# vuls-data-update
+git switch -c integration origin/feat-extract-apple
+git merge origin/MaineK00n/openssh-security   # range.go を解決
+
+# vuls
+git switch -c integration origin/MaineK00n/apple-security-releases
+git merge origin/MaineK00n/openssh-security   # models 2 ファイルと detector 2 ファイルを解決
+go mod edit -replace github.com/MaineK00n/vuls-data-update=<上の integration のパス>
+CGO_ENABLED=0 GOEXPERIMENT=jsonv2 go build -trimpath -ldflags "-s -w" -o vuls ./cmd/vuls
+```
+
+4 本の PR がすべて上流にマージされれば、この手順は「マージ済みコミットを checkout して
+`make build`」に単純化できる。
 
 ## ファイル
 
 ```
 data/
-  vuls                    検知に使う vuls v1 のバイナリ
+  vuls.zst                検知に使う vuls v1 のバイナリ（unpack-db.sh が展開）
   sources.tsv             各 DB がどの tag / commit から作られたかの記録
   db/
     vuls.*.db.zst         commit 済みの DB（unpack-db.sh で展開）
@@ -113,7 +153,17 @@ data/
     results/<slot>/*.json スキャン結果 兼 検知結果
   bin/
     common.sh             共通定義（ベンダ・slot・パス）
-    unpack-db.sh          .db.zst を展開
+    unpack-db.sh          .db.zst と vuls.zst を展開
     detect.sh             slot ごとに DB を変えて検知
     summary.py            slot 00 を基準に漏れ／過剰を集計
 ```
+
+## OpenSSH のデータについて
+
+`vuls.openssh.db` の元になる extracted データは ghcr に存在しない。
+vuls-data-update の `fetch openssh-security` が `origin/security.html` と変換手順
+（`SKILL.md`）を出力し、そこから `raw/` をモデルによる変換で作る構成のためである。
+`data/sources.tsv` では kind を `local` とし、commit hash の代わりに `-` を置いている。
+
+生成された `raw/` は `data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-raw-openssh-security/`
+に置いてある（`.gitignore` 対象）。再取得するには vuls-data-update の PR #928 を参照。
