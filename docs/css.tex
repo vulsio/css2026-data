@@ -18,12 +18,18 @@
 \newcommand\newblock{\hskip .11em\@plus.33em\@minus.07em}
 \makeatother
 
+%% ipsj.cls は \paragraph を level 3 で定義しており（secnumdepth も 3），
+%% \theparagraph が \thesubsubsection.<n> なので，\subsubsection を使わない
+%% 本稿では「7.2.0.1」のような番号が付く。段落見出しは本文側で (1) (2) と
+%% 振っているため，level 3 以下には番号を付けない。
+\setcounter{secnumdepth}{2}
+
 \begin{document}
 
 %% 本文が和文の場合，タイトル・著者名・著者所属・概要は，和文・英文共に必須．
 
-\title{脆弱性検知条件の供給源の再検討 \\ ---NVD・VulnCheckの追従性の定量評価とLLMを用いた一次データソースの構造化---}
-\etitle{Revisiting the Supply of Vulnerability Detection Conditions: Quantifying the Timeliness of NVD and VulnCheck, and LLM-assisted Structuring of Primary Data Sources}
+\title{脆弱性検知条件の供給源の再検討 \\ ---検知精度によるNVD・VulnCheck・一次データソースの比較とLLMによる構造化---}
+\etitle{Revisiting the Supply of Vulnerability Detection Conditions: Comparing NVD, VulnCheck and Primary Sources by Detection Accuracy, with LLM-assisted Structuring}
 
 \affiliate{FUTURE}{フューチャー株式会社\\
 Future Corporation}
@@ -36,11 +42,14 @@ Future Corporation}
 
 \begin{abstract}
 我々はOSS脆弱性スキャナVulsと脆弱性DBを開発・運用している．
-CVE報告件数の急増（2026年は210日で44,809件）を受け，検知条件をどこから得るべきかを定量的に明らかにする．
-NVDとVulnCheck NVD++の全件（取下げ除き353,704件）の調査により，NVDのCPE適用条件の付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年公開分の37.3\%をNVD自身が解析対象外と明示していることを示した．
-FortinetのCVRF/CSAFとの突合では，Fortinet採番CVEでも一致は63.3\%にとどまり，製品に組み込まれたOSS部品の脆弱性では両者ともFortinet製品を列挙しないことを明らかにした．
-入力データソースのみを変えたDBで検知すると，サポート終了版FortiOSはNVDのみで未検知率68.8\%（93.5\%が組込み部品），VulnCheck追加時のWindowsは過剰検知率70.6\%に達し，未検知は2023年以前に限っても減らなかった．
-そこで一次データソースをLLMで検証可能・再現可能に構造化する方式を提案する．
+CVE報告件数の急増を受け，検知に不可欠な「どの製品のどの版が影響を受けるか」という条件をどの供給源から得るべきかを調べた．
+NVDとVulnCheck NVD++の全件（取下げ除き353,704件）では，NVDによるCPE適用条件の付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年公開分の37.3\%をNVD自身が解析対象外と明示していた．
+ただし付与率は検知精度を予測しない．
+入力データソースのみを変えたDBで10環境を検知すると，NVDのみでの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの68.8\%まで開き，後者の93.5\%は組込みOSS部品のCVEであった．
+VulnCheckはEdgeの未検知を96.2\%から0.4\%へ下げる一方，Windowsでは過剰検知率70.6\%を生む．
+一次データソースが常に優るわけでもない．
+どの供給源を使うべきかは製品ごとに異なる．
+本稿はその判断に要る測定と，一次データソースをLLMで再現可能に構造化する方式を示す．
 \end{abstract}
 
 %% キーワード (1--5単語) の記載は任意．
@@ -51,11 +60,14 @@ FortinetのCVRF/CSAFとの突合では，Fortinet採番CVEでも一致は63.3\%�
 
 \begin{eabstract}
 We develop Vuls, an open-source vulnerability scanner, and its database.
-Given the sharp growth of reported CVEs (44,809 in the first 210 days of 2026), we ask where detection conditions should come from.
-Analysing all 353,704 non-rejected entries of NVD and VulnCheck NVD++, we show NVD's coverage of CPE applicability statements fell from 100\% up to 2023 to 56.1\% in 2026, with 37.3\% of 2025 entries marked Deferred.
-Against Fortinet's CVRF/CSAF, only 63.3\% agree even for Fortinet-assigned CVEs, and for embedded OSS components neither source lists a single Fortinet product.
-Scanning six environments with databases differing only in their input source, we measure a 68.8\% miss rate on an end-of-life FortiOS with NVD alone (93.5\% embedded-component CVEs), a 70.6\% false-positive rate on Windows once VulnCheck is added, and no reduction in misses for pre-2024 CVEs.
-We therefore propose a verifiable, reproducible LLM-assisted method for structuring primary sources.
+Given the CVE surge, we ask where a scanner should get its detection conditions.
+Across all 353,704 non-rejected entries of NVD and VulnCheck NVD++, NVD's CPE applicability coverage fell from 100\% up to 2023 to 56.1\% in 2026, and 37.3\% of 2025 entries are marked Deferred.
+Coverage, however, does not predict detection accuracy.
+Across ten environments scanned with databases differing only in input source, the miss rate under NVD alone ranges from 1.3\% on Windows Server 2022 to 68.8\% on an end-of-life FortiOS, 93.5\% of the latter being embedded OSS components.
+VulnCheck cuts Microsoft Edge's miss rate from 96.2\% to 0.4\% yet yields a 70.6\% false-positive rate on Windows.
+Nor is the primary source always better.
+Which source to use differs by product.
+We report the measurements that decision needs and a reproducible LLM-assisted method for structuring primary sources.
 \end{eabstract}
 
 %% the following keyword part is optional and can be omitted.
