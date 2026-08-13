@@ -25,8 +25,6 @@
 
 一次データソースには，ベンダが機械可読形式で公開しているものを用いる．
 FortinetはPSIRT AdvisoryのCVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}，Ciscoは openVuln API 由来のJSON\cite{vuls-data-raw-cisco-json}である．
-我々はFortinet PSIRTのHTMLを変換したデータ\cite{vuls-data-raw-fortinet}も保持しているが，CVRF/CSAFの更新に追従できておらず，2018〜2023年公開分ではノードの51\%でバージョンが空になる（実際のアドバイザリには記載がある）ため，本稿では基準として採用しない．
-この追従漏れ自体は，手書き抽出器が提供元の変更で静かに壊れるという6章の動機の実例である．
 
 Fortinet CVRF は \texttt{product\_tree} に影響を受けるバージョンを個別に列挙し（\texttt{FortiOS-7.6.1}，\texttt{FortiOS-7.6.0}…），\texttt{product\_statuses} で \texttt{Known Affected} を与える．
 修正版は持たないため，未検知は測れるが過剰検知は測れない．
@@ -152,7 +150,7 @@ CiscoはVulnCheckでも打切り10.4\%が残る．
 以上の比較が可能だったのは，一次データソースが機械可読な形で提供されているためである．
 同じ比較を広げるには，そうでないものを機械可読な形に変換する必要がある．
 対象とするデータソースを付録\ref{app:sources}の表\ref{tab:sources}に示す．
-NVDでの供給状況（4章）が良好なもの（Fortinet，Microsoft，Apple，OpenSSH）と不良なもの（Cisco，nginx）の両方を含め，「NVDで足りている領域」と「足りていない領域」を対比できるよう選定した．
+NVDでの供給状況（4章）が良好なもの（Fortinet，Microsoft，Apple，OpenSSH）と不良なもの（Cisco，OpenSSL）の両方を含め，「NVDで足りている領域」と「足りていない領域」を対比できるよう選定した．
 このうちFortinet，Cisco，Microsoftは機械可読形式からの収集を実装済みである\cite{vuls-data-update}．
 Apache httpdとOpenSSLは当初HTMLのみと考えていたが，調査の結果いずれもCVEごとのJSONを公開しており\cite{vdu-pr907,vdu-pr900}，Apache httpdに至っては入口と考えていたHTMLがそのJSONから生成されたページであった．
 Apple macOSはHTMLのみの提供であり，7章の評価に用いるため次章のP2（抽出器の生成）により実装した．

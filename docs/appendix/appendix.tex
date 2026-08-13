@@ -155,14 +155,12 @@ JPCERT/CCはJVNを通じて国内ベンダの脆弱性を採番する経路で�
     OS / Apple macOS & セキュリティリリースノート（HTML） & 付与率99.4\%だが未検知率34.2\%（7章） \\
     ソフトウェア / Apache httpd & CVE JSON（HTMLの生成元） & Apache CNA全体で付与率92.5\% \\
     ソフトウェア / OpenSSL & セキュリティアドバイザリJSON & 付与率79.2\%，\texttt{Deferred} 20.8\% \\
-    ソフトウェア / nginx & セキュリティアドバイザリ一覧（HTML） & \texttt{f5:nginx} のCPEは41件のみ（2023年以前） \\
-    ソフトウェア / OpenSSH & セキュリティ情報・リリースノート（HTML＋テキスト） & \texttt{openbsd:openssh} に134件．ベンダ側は7件のみ \\
+    ソフトウェア / OpenSSH & セキュリティ情報・リリースノート（HTML＋テキスト） & \texttt{openbsd:openssh} に134件．一次データソースは55件 \\
     \hline
   \end{tabular}
   \end{center}
 \end{table*}
 
-nginxはNVDが \texttt{cpe:2.3:a:f5:nginx} のCPEを41件にしか付与しておらず2023年より後の公開分が存在しないのに対し，ベンダのページは62件を挙げる\cite{vdu-pr906}．
 OpenSSHは逆に，NVDの供給は足りているが一次データソース側にCVE IDによる索引が無い例である（6.5節）．
 各データソースへの適用方針は6.6節に示す．
 

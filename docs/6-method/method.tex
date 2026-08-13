@@ -5,7 +5,6 @@
 一次データソースを直接収集しようとすると2つの困難がある．
 第一に\textbf{構造の不安定性}である．
 HTMLは表示のための形式でスキーマがなく，提供元の改修でセレクタや表の構成が予告なく変わるため，手書きのスクレイパは修正されるまでデータ更新が止まる．
-5.2節で述べたFortinet PSIRTのHTML変換データの追従漏れは，この失敗が実際に起きた例である．
 第二に\textbf{記述の多様性と欠損}である．
 バージョン表記は \texttt{from 2.4.0 through 2.4.67} のような範囲，個別バージョンの列挙，\texttt{Rev.15.02.09 以前} のような自然言語が混在し，機械可読形式であっても値そのものが欠けている場合がある（6.3節）．
 
@@ -45,7 +44,7 @@ P1は出力を一度きりの資産として凍結し，P2は出力をコード�
     LLMの実行時点 & 一度きり & 生成時とドリフト検知時 & 新規入力の初回 \\
     決定性の担保(R1) & 生成物をコミットし固定 & 日々のfetchはコードのみ & 入力ハッシュから出力のキャッシュ \\
     検証(R2) & 出典間の相互照合＋回帰テスト & ゴールデンセットへの回帰テスト & スキーマ＋決定的検証器 \\
-    実装状況 & Fortinet CVRF\cite{vdu-pr892} & Apple\cite{vdu-pr914}，Microsoft\cite{vdu-pr919}，nginx\cite{vdu-pr906} & OpenSSH\cite{vdu-pr928} \\
+    実装状況 & Fortinet CVRF\cite{vdu-pr892} & Apple\cite{vdu-pr914}，Microsoft\cite{vdu-pr919} & OpenSSH\cite{vdu-pr928} \\
     \hline
   \end{tabular}
   \end{center}
@@ -135,7 +134,7 @@ CVE IDが効くのは検知そのものではなく，他データソースや�
 
 表\ref{tab:sources}への適用方針は次のとおりである．
 機械可読形式が提供されているFortinet，Cisco，Microsoft，およびP0で見つかったApache httpd，OpenSSLは既存の実装経路を用い，そこに欠損があればP1で補う．
-Apple macOSはP2で実装済みであり，同じくHTMLのみのnginxもP2で実装中である\cite{vdu-pr906}．
+Apple macOSはP2で実装済みである．
 P3の対象はOpenSSHである．
-本稿が調べた範囲では，HTMLのみで提供されるものの多くは構造が安定しており（Sambaの個別アドバイザリ\cite{samba-sec}やApache Tomcatの一覧はいずれもP2で扱える），\textbf{LLMをデータ経路に置く必要がある対象はごく限られる}．
+\textbf{LLMをデータ経路に置く必要がある対象は，探したうえで残ったものだけであり，本稿の範囲ではOpenSSHのみであった}．
 LLMは機械可読形式を置き換えるものではなく，それが存在しないか不完全な場合の補完手段として位置づける．
