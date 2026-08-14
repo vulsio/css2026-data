@@ -7,7 +7,7 @@
 \subsection{調査対象と方法}
 \label{sec:method3}
 
-全件調査の対象は，我々が運用するデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショット（取得時のコミットハッシュで固定）である．
+全件調査の対象は，我々が運用するデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショットである．
 両者のCVE ID集合を比べると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件で，\textbf{VulnCheck NVD++ の収録IDはNVDのID空間を超えない}．
 集計では \texttt{vulnStatus} が \texttt{Rejected} の17,712件を除外し353,704件を対象とし，各エントリの \texttt{configurations}（NVD）と \texttt{vcConfigurations}（VulnCheck独自）から \texttt{vulnerable: true} の \texttt{cpeMatch} の個数とバージョン指定の種別を数えた\footnote{取下げエントリは製品情報を持たないことが正常であり，含めると付与率を不当に低く見せる．実例として，Fortinet採番のCVEには2025年に一括取下げされたものが866件含まれ，除外しない場合Fortinetの付与率は32.8\%，除外後は99.6\%と算出される．}．
 
