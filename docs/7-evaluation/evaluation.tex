@@ -11,9 +11,8 @@
 \textbf{DB-primary} は一次データソース（Fortinet CVRF/CSAF，Cisco openVuln API，MicrosoftのMSRC CVRF・Security Bulletin・更新プログラムカタログ・WSUSSCN2・更新プログラム記事，Apple Security Releases，OpenSSH Security），\textbf{DB-nvd} はNVDの \texttt{configurations}，\textbf{DB-vc} はVulnCheckの独自エンリッチメント（\texttt{vcConfigurations} と \texttt{vcVulnerableCPEs}），\textbf{DB-nvd+vc} は両者である．
 DB-vcにNVD由来の \texttt{configurations} は含めていない．VulnCheckが独自に何を足し何を誤るかを分離するためである．
 
-同一のスキャン結果を4つ複製し，データベースだけを変えて検知した．
-対象はFortiOS 7.0.1と5.2.0，Cisco IOS 15.6(1)T1とIOS XE 16.12.1，Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6，OpenSSH 8.5p1と9.6p1の10環境である．
-1台に複数の製品が載るため（macOSとSafari，WindowsとMicrosoft Edge），検知は照合されたCPEにより製品単位に集計した（Safariの2行は本文で述べる）．
+同一のスキャン結果を4つ複製しデータベースだけを変えて検知した．対象はFortiOS 7.0.1と5.2.0，Cisco IOS 15.6(1)T1とIOS XE 16.12.1，Windows 11 23H2とWindows Server 2022，macOS 14.7.4と10.13.6，OpenSSH 8.5p1と9.6p1の10環境である．
+1台に複数の製品が載るため（macOSとSafari等），検知は照合されたCPEにより製品単位に集計した（Safariの2行は本文で述べる）．
 Microsoftの一次データソースのみ適用済みKBによる検知であり，スキャン結果も実機から取得した（他は宣言したCPEのみを持つ疑似サーバである）．
 なお \texttt{apple:mac\_os\_x} は \texttt{apple:macos} に寄せた．NVDが古いCVEを前者に置いており，分けたままでは表記ゆれがNVDの未検知として計上されるためである．
 
@@ -68,8 +67,7 @@ macOS 14.7.4のDB-nvdの未検知率は34.2\%（462件）で，そのうち89.4\
 
 \paragraph{(3) VulnCheckの自動付与は，Windowsで大量の過剰検知を生む．}
 Windows 11 23H2に対しDB-vcはDB-primaryと1件も一致せず，835件を過剰に検知した（2020年485件，2019年333件）．
-原因はNVDの抽象CPEの展開である．
-例えばCVE-2007-1644に対しNVDは \texttt{cpe:2.3:o:microsoft:all\_windows:abstract\_cpe:*} という照合不能なプレースホルダを置いているが，VulnCheckはこれを具体的な製品へ展開し \texttt{windows\_11\_23h2:-} を付与している．
+原因はNVDの抽象CPEの展開である．CVE-2007-1644に対しNVDは \texttt{all\_windows:abstract\_cpe} という照合不能なプレースホルダを置いているが，VulnCheckはこれを具体的な製品へ展開し \texttt{windows\_11\_23h2:-} を付与している．
 2007年のWindows NT/2000のDNS脆弱性がWindows 11で検知される．
 この835件のうち833件はDB-nvd+vcでも抑制されず，過剰検知率は70.6\%に達する．VulnCheckのCPEが機械的に生成されている\cite{vulncheck-cpe}ことの帰結である．
 
@@ -92,8 +90,8 @@ OpenSSHだけは一次データソースの検知件数（8.5p1で7件，9.6p1�
 DB-nvdのみが検知した18件・15件はいずれも一次データソースにまったく現れず，すべてMITREが採番したCVEであり，8.5p1では67\%，9.6p1では80\%が2026年公開分である．
 OpenSSH自身は10.5のリリースノートで，AIによる報告の多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．
 ここで観測されているのは何を脆弱性と数えるかについて上流と第三者採番者の判断が割れている状態であり，どちらを正解とするかは事前に決められない．
-未検知の側も内訳は異質である．DB-nvdの取りこぼしは各1件で，8.5p1では \texttt{OPENSSH-2023-02-02-2}——CVEが採番されておらずNVDには原理的に存在し得ないエントリ（\ref{sec:c1c3}節のC1a）——である．
-DB-vcは4件・3件を取りこぼし，そこにregreSSHion（CVE-2024-6387）とTerrapin（CVE-2023-48795）が含まれる．
+未検知の内訳も異質である．DB-nvdの取りこぼしは各1件で，8.5p1ではCVEが採番されておらずNVDには原理的に存在し得ないエントリ（\ref{sec:c1c3}節のC1a）である．
+DB-vcは4件・3件を取りこぼし，regreSSHionとTerrapinを含む．
 原因はベンダ名の不一致で，VulnCheckは \texttt{openssh:openssh}，NVDと一次データソースは \texttt{openbsd:openssh} を用いる（\ref{sec:setup}節の \texttt{mac\_os\_x} と同種である）．
 \textbf{同じ製品を指すCPEが供給源ごとに違うだけで，最も広く知られた脆弱性が検知されなくなる}．
 
@@ -115,14 +113,13 @@ DB-vcはこの2026年公開分を0\%まで下げており，\ref{sec:c4}節で�
 Ciscoでは版を持つ製品名を1つも持たないアドバイザリが21.9\%を占め（\ref{sec:result}節(4)），OpenSSHでは網羅性がNVDに劣る（同(6)）．
 またMicrosoftのみ検知方式が異なり（適用済みKB対CPE），他のベンダと同列には比較できない．
 結果はバージョンの選び方にも強く依存し，同じFortiOSでも7.0.1では未検知率10.1\%，5.2.0では68.8\%である．
-指標の側にも制約がある．製品の突合はCPEの製品部から区切り文字を除いた文字列で行うため，略称の差（\texttt{FortiClient Enterprise Management Server} と \texttt{forticlientems} 等）は吸収できず，表\ref{tab:match}のC2にはこの対応付けの失敗が含まれる可能性がある．
-「自社採番か組込み部品か」の判定はNVDの \texttt{sourceIdentifier} を代理指標としており，採番CNA以外に由来する識別子が含まれうる．
+指標の側にも制約がある．表\ref{tab:match}のC2には\ref{sec:c1c3}節で述べた突合の失敗が含まれ，「自社採番か組込み部品か」の判定はNVDの \texttt{sourceIdentifier} を代理指標としている．
 
 \paragraph{供給源の信頼度による抑制の代償と限界．}
 VulnCheckのCPEは機械的に生成されるため，Microsoft Edgeのようにうまく機能するものとWindowsのように大量の偽陽性を生むものが混在する（\ref{sec:result}節(1)(3)）．Vulsが抑制規則を置いているのはこのためであり，規則そのものは必要な妥協である．
-本稿が測ったのはその代償（macOS 10.13.6で真陽性781件の切り捨て）と限界（Windows 11 23H2の偽陽性833件がすり抜ける）であり，後者はNVDが置いた抽象CPE（\texttt{all\_windows}）とVulnCheckが展開した具体CPE（\texttt{windows\_11\_23h2}）が別製品として扱われるために起きる．
-規則を緩めれば前者は救えるが後者は悪化する．必要なのは信頼度の調整ではなく，照合不能な抽象CPEをソース側で明示的に扱うことだと考えられる．
+偽陽性833件がすり抜けるのは，NVDが置いた抽象CPE（\texttt{all\_windows}）とVulnCheckが展開した具体CPE（\texttt{windows\_11\_23h2}）が別製品として扱われるためである．
+規則を緩めれば真陽性781件は救えるが偽陽性は悪化する．必要なのは信頼度の調整ではなく，照合不能な抽象CPEをソース側で明示的に扱うことだと考えられる．
 
 \paragraph{LLM利用に伴うリスク．}
-\ref{sec:llm}章のP1・P2は非決定性を生成時に閉じ込めるが，P3はデータ経路にLLMが残るため，キャッシュと検証器に決定性を依存する．
-いずれの検証器も形式的な整合性を確認できるが「原文の意味を正しく解釈したか」は保証しない．\ref{sec:p3}節のCVE IDの対応付けはその典型で，引用が出典に逐語で存在することは検査できても，その出典が当該エントリのものかは検査できない．
+\ref{sec:llm}章のP1・P2は非決定性を生成時に閉じ込めるが，P3はデータ経路にLLMが残る．
+\ref{sec:p3}節で述べたとおり原文に無い値の混入を止める検査を機械的に強制できておらず，\ref{sec:p1}節で相互照合により118件の不一致を検出したことは，\textbf{単一の出力を信じてはならない}ことの裏返しでもある．

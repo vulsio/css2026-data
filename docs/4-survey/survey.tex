@@ -25,12 +25,11 @@
 
 一次データソースには，FortinetのPSIRT Advisory（CVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}）とCiscoのopenVuln API由来のJSON\cite{vuls-data-raw-cisco-json}を用いる．
 CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，影響を受けない版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．そこでこの注記を解析して負例を作った（122件から511組，影響版と矛盾するものは0件）．CSAFは影響を受けない版を \texttt{known\_not\_affected} で機械可読に与える（Fortinetは \texttt{fixed} を用いない）．Fortinetは2024年に注記の記入をやめCSAFの公開を始めており，両者は期間を分担する．製品情報を伴うCVRFは616件，CSAFは173件である．
-Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙し\textbf{CPEを持たない}ため，製品名からCPEへの対応付けを別途実装した．対応付くのはアドバイザリ単位では31.9\%にとどまる．
-このためCiscoについてはC1とC4を測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
+Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙し\textbf{CPEを持たない}ため製品名からCPEへの対応付けを別途実装したが，対応付くのはアドバイザリ単位では31.9\%にとどまる．そこでCiscoはC1とC4のみ測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
 C2・C3の判定には\textbf{境界値法}を用いる．
 バージョン範囲を連続区間として比較すると，Fortinetの \texttt{<=6.4.15} とNVDの \texttt{versionEndExcluding: 6.4.16} のように実在する版の集合としては同一のものが「NVD側が広い」と誤判定されるためである．
-そこで (CVE, 製品) ごとに，一次データソースが影響ありとする版を検知されるべき点，影響なしとする版を検知されるべきでない点として，各点で相手側の条件の真偽が一致するかを評価する．
+そこで (CVE, 製品) ごとに影響ありとする版を検知されるべき点，影響なしとする版を検知されるべきでない点とし，各点で相手側の条件の真偽が一致するかを評価する．
 製品の突合はCPEの製品部から区切り文字を除いた文字列で行い，版表現が解析できない組は除外した．
 さらに結果をCVEの採番元（NVDの \texttt{sourceIdentifier}）で層別する．Fortinet自身が採番したCVEと，Fortinet製品に組み込まれた部品に対して他者が採番したCVE（以下，\textbf{組込み部品のCVE}）ではNVDの振る舞いが大きく異なるためである．
 
@@ -47,7 +46,7 @@ C4はGit履歴から測る．スナップショットを1日2回取得しGitで�
 
 \paragraph{(2) 2024年を境に急落し，待っても解消しない．}
 \texttt{configurations} に \texttt{vulnerable} な \texttt{cpeMatch} を1つ以上持つ割合は2024年80.5\%，2025年62.6\%，2026年56.1\%と低下し，低下分はほぼそのまま \texttt{Deferred} の増加（19.5\%，37.3\%，34.8\%）で説明される（2026年は別途9.3\%が解析待ちである）．
-\texttt{Deferred} の定義は「エンリッチメント予定に入っていない」であり，2025年公開分は公開から平均約1年半が経過してなお37.3\%が \texttt{Deferred} のままである．
+2025年公開分は，公開から平均約1年半が経過してなお37.3\%が \texttt{Deferred} のままである．
 すなわち2025年以降のNVDは，約4割弱が将来にわたって検知条件を供給されないと想定して設計すべきである．
 未付与エントリの滞留も長く，\texttt{Awaiting Analysis} でも中位数43日・90\%点124日，\texttt{Deferred} の41,363件は中位数286日が経過している．
 \textbf{新規公開のCVEは，公開後1〜4か月はNVDの検知条件が存在しない前提で設計する必要がある}．
@@ -67,7 +66,7 @@ VulnCheckの価値は，最終的な網羅性よりも公開直後の期間に�
 採番CNA別（\texttt{sourceIdentifier} による）の差は極端である．
 Microsoft 99.7\%，Fortinet 99.6\%，Apple 99.4\%と付与率がほぼ維持される一方，Cisco 77.2\%（\texttt{Deferred} 15.0\%），JPCERT/CC採番は39.1\%（同59.7\%）でVulnCheckを加えても48.4\%にとどまる．
 JPCERT/CCはJVNを通じて国内ベンダの脆弱性を採番する経路であり，\textbf{国内ベンダ製品の検知条件はNVDもVulnCheckもほぼ供給していない}．
-またMicrosoftは付与率99.7\%に対しバージョン特定可能率が92.9\%と乖離する．WindowsのCPEはバージョン部が \texttt{-} で表現され，パッチ適用状態は更新プログラム（KB）情報に依存するためである．
+またMicrosoftは付与率99.7\%に対しバージョン特定可能率が92.9\%と乖離する．版を特定できない大半はOfficeやMicrosoft 365，Entra IDのようにCPEに版を持たない製品であり，WindowsのCPEは99.3\%がビルド番号の範囲を伴う．
 
 \subsection{一次データソースとの一致（C1〜C3）}
 \label{sec:c1c3}
@@ -100,7 +99,7 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
 
 \paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
 他者が採番したCVEについてC2は100.0\%である（CVRFで54 CVE・255組，CSAFで6 CVE・60組）．
-その99〜100\%は「当該CVEにCPEは付与されているが，Fortinet製品のCPEが1件も含まれない」ケースで，CVE-2024-6387（regreSSHion）やCVE-2023-48795（Terrapin）などが該当する．
+その99〜100\%はCPEは付与されているがFortinet製品のCPEが1件も含まれないケースで，CVE-2024-6387（regreSSHion）やCVE-2023-48795（Terrapin）が該当する．
 Fortinetは自社製品が影響を受けることをアドバイザリで公表しているが，NVDのCPEには部品そのものの製品（\texttt{openbsd:openssh} 等）しか並ばない．
 \textbf{OSS部品を組み込んだ製品を検知しようとすると，この欠落がそのまま未検知になる}．
 \ref{sec:year}節の付与率にはこの欠落は一切現れない．
@@ -108,7 +107,7 @@ VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの�
 
 \paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%にとどまる．}
 \ref{sec:grain}節でFortinetの付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
-C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースであり，FortiSOARやFortiClient Windows/Mac/Linux のように，Fortinetが区別する製品をNVDが列挙していないか異なる粒度で表す場合である．
+C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースである．FortiSOARのようにNVDが列挙していない製品のほか，\textbf{製品の切り方の違いも含む}．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{forticlient} の \texttt{target\_sw} で区別するため一致しない（212組中46組）．
 \textbf{付与率は検知可能性の上限にすぎない}．
 一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から89.9\%へ，C2を15.8\%から0.0\%へ，未検知率を10.8\%から1.5\%へ改善する．
 過剰検知は負例1,075点中12点（1.1\%）でVulnCheckも同数，CVRF基準でも400点中4点・7点であり，\textbf{本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった}．
