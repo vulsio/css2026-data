@@ -13,7 +13,7 @@ NVD\cite{nist-nvd}においてこの役割を担うのが，\texttt{configuratio
 
 近年，CVEの報告件数は急増している．
 我々の観測では2026年は1月1日から7月29日までの210日間で44,809件（取下げを除く）が公開されており，年率換算で約7.8万件，2023年の28,817件の約2.7倍のペースである．
-この増加が解析体制を圧迫していることは，NVDが \texttt{Deferred} というステータスの運用を始めたこと\cite{nvd-status}に表れている．これは遅延ではなく\textbf{NVDがエンリッチメントを行わないと明示した状態}である．
+この増加が解析体制を圧迫していることは，NVDが \texttt{Deferred} というステータスの運用を始めたこと\cite{nvd-status}に表れている．これは遅延ではなくNVDがエンリッチメントを行わないと明示した状態である．
 またこの遅延を受け，VulnCheckはNVDのデータに独自の解析・エンリッチメントを加えたVulnCheck NVD++\cite{vulncheck-nvd2}の提供を開始した．NVD由来の \texttt{configurations} を保持したまま独自の結果を \texttt{vcConfigurations} と \texttt{vcVulnerableCPEs} に持つため，両者の寄与を機械的に切り分けられる．
 
 我々のような検知ツールの提供者にとってこれは，「これまで信頼して使えていたデータソースを今後も同じ前提で使えるのか」という運用上の問題である．
@@ -21,4 +21,4 @@ NVD\cite{nist-nvd}においてこの役割を担うのが，\texttt{configuratio
 
 そこで本稿は，NVDとVulnCheck NVD++の全件（2026年7月29日時点，取下げを除く353,704件）についてCPE適用条件の付与率と粒度を測り，さらに一次データソースを基準とする4基準を定義してFortinetとCiscoで実測する（\ref{sec:supply}章）．
 そのうえで，LLMの非決定性を日々のデータ経路から追い出したまま一次データソースを構造化する3つの適用パターンを整理して実装し（\ref{sec:llm}章），入力データソースのみを変えた4種のデータベースで計10環境を検知して，上記の差が検知結果に現れることを確認する（\ref{sec:eval}章）．
-\textbf{NVDのみでの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの68.8\%まで開き，\ref{sec:supply}章で測った付与率はこの差をほとんど予測しない}．
+NVDのみでの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの68.8\%まで開き，\ref{sec:supply}章で測った付与率はこの差をほとんど予測しない．
