@@ -7,8 +7,10 @@ import pathlib
 import sys
 from multiprocessing import Pool
 
-BASE = str(pathlib.Path(__file__).resolve().parents[2]
-           / "ghcr.io/vulsio/vuls-data-db")
+# Data root: repository-root ghcr.io/ by default; VULS_DATA_ROOT overrides it so the
+# same scripts can run against the copy under data/db/ used by the detection experiment.
+BASE = os.environ.get("VULS_DATA_ROOT") or str(
+    pathlib.Path(__file__).resolve().parents[2] / "ghcr.io/vulsio/vuls-data-db")
 NVD = os.path.join(BASE, "vuls-data-raw-nvd-feed-cve-v2")
 VC = os.path.join(BASE, "vuls-data-raw-vulncheck-nist-nvd2")
 OUT = "/tmp/claude-1000/-home-mainek00n-github-github-com-vulsio-css2026-data/37e4581d-b165-4be5-a3b7-036152d3298a/scratchpad"

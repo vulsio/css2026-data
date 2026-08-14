@@ -24,7 +24,7 @@
 \end{list}
 
 一次データソースには，FortinetのPSIRT Advisory（CVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}）とCiscoのopenVuln API由来のJSON\cite{vuls-data-raw-cisco-json}を用いる．
-CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，影響を受けない版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．負例を作れないため，CVRF基準では過剰検知を測れない．CSAFは影響を受けない版を \texttt{known\_not\_affected} で機械可読に与えるため過剰検知も測れる（Fortinetは \texttt{fixed} を用いない）．製品情報を伴うCVRFは616件，CSAFは173件である．
+CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，影響を受けない版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．そこでこの注記を解析して負例を作った（122件から511組，影響版と矛盾するものは0件）．CSAFは影響を受けない版を \texttt{known\_not\_affected} で機械可読に与える（Fortinetは \texttt{fixed} を用いない）．Fortinetは2024年に注記の記入をやめCSAFの公開を始めており，両者は期間を分担する．製品情報を伴うCVRFは616件，CSAFは173件である．
 Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙し\textbf{CPEを持たない}ため，製品名からCPEへの対応付けを別途実装した．対応付くのはアドバイザリ単位では31.9\%にとどまる．
 このためCiscoについてはC1とC4を測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
@@ -61,7 +61,7 @@ VulnCheckの価値は，最終的な網羅性よりも公開直後の期間に�
 
 \textbf{CPE適用条件が存在することとバージョンを特定できることは同じではない}．
 2024年以降に公開された132,928件のうち，バージョン範囲または特定バージョンで表現されているのはNVDで63.9\%，VulnCheckを加えて77.8\%にとどまる．
-同一エントリ内に両者が混在する例もあり，CVE-2024-6387（regreSSHion）ではVulnCheckが \texttt{openssh:openssh} に 8.5p1〜9.7p1 という適切な範囲を与える一方，\texttt{gnu:grub2:-} のようにバージョン指定を持たない条件も並ぶ．
+同一エントリ内で製品ごとに粒度が異なる例もある．
 付与率の向上が検知精度の向上を意味するとは限らない．
 
 採番CNA別（\texttt{sourceIdentifier} による）の差は極端である．
@@ -86,8 +86,8 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
     \hline
     基準 & 採番元 & 一致 & C2 製品欠落 & C3a 未検知 & C3b 過剰検知 & 未検知率 & 過剰検知率 \\
     \hline
-    CVRF & Fortinet & 63.3 / 75.0 & 18.7 / 11.3 & 18.1 / 13.7 & --- & 17.1 / 9.7 & --- \\
-    CVRF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & --- & 100.0 / 100.0 & --- \\
+    CVRF & Fortinet & 63.1 / 74.5 & 18.7 / 11.3 & 17.9 / 13.4 & 0.2 / 0.4 & 16.9 / 9.5 & 0.0 / 0.0 \\
+    CVRF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 99.7 / 99.7 & 0.0 / 0.0 \\
     CSAF & Fortinet & 71.1 / \textbf{89.9} & 15.8 / \textbf{0.0} & 9.4 / 6.4 & 3.7 / 3.7 & 10.8 / \textbf{1.5} & 0.5 / 0.5 \\
     CSAF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 59.2 / 59.2 & 0.0 / 0.0 \\
     \hline
@@ -95,7 +95,7 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
   \end{center}
   \footnotesize
   一致・C2・C3a・C3bは(CVE,製品)組に対する割合，未検知率・過剰検知率は検証点に対する割合．
-  CVRFは影響を受けない版を機械可読な形で持たないため過剰検知（C3b）を測定できず，製品情報を伴う2022年以降を対象とする．
+  負例はCVRFが \texttt{Solutions} 注記の400点，CSAFが \texttt{known\_not\_affected} の1,075点．CVRFは製品情報を伴う2022年以降が対象．
 \end{table*}
 
 \paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
@@ -111,8 +111,8 @@ VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの�
 C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースであり，FortiSOARやFortiClient Windows/Mac/Linux のように，Fortinetが区別する製品をNVDが列挙していないか異なる粒度で表す場合である．
 \textbf{付与率は検知可能性の上限にすぎない}．
 一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から89.9\%へ，C2を15.8\%から0.0\%へ，未検知率を10.8\%から1.5\%へ改善する．
-過剰検知率は0.5\%とNVDと同等であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった．
-ただしこれは影響なしとされた版を負例とした評価であり，粗いCPEの影響は\ref{sec:eval}章で改めて測る．
+過剰検知は負例1,075点中12点（1.1\%）でVulnCheckも同数，CVRF基準でも400点中4点・7点であり，\textbf{本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった}．
+ただし粗いCPEの影響は\ref{sec:eval}章で改めて測る．
 
 \subsection{C4：付与遅延}
 \label{sec:c4}

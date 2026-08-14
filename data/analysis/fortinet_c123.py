@@ -2,9 +2,11 @@
 """C1-C3 for Fortinet using the authoritative CVRF / CSAF feeds.
 
 The HTML-derived vuls-data-raw-fortinet must not be used: it does not keep up with
-Fortinet's CVRF/CSAF updates. CVRF enumerates affected versions exactly but carries no
-fixed versions, so it yields C2 and C3a (missed detection) only. CSAF additionally
-carries known_not_affected (the fixed versions), so it yields C3b (over-detection) too.
+Fortinet's CVRF/CSAF updates. CVRF enumerates affected versions exactly. It has no remediation element, but the
+fixed version is stated in the free-text Solutions note, so parsing that note gives
+the negative points needed for C3b (over-detection) as well as C2/C3a. Fortinet stops
+filling that note in 2024 -- exactly when it starts publishing CSAF, whose
+known_not_affected carries the same information in machine-readable form.
 """
 import json
 import os
@@ -112,6 +114,75 @@ def load_cvrf():
     return aff, dates, nocve, nadv, ntree
 
 
+# ---------------- CVRF: fixed versions stated in the Solutions note ----------------
+# The note is prose written by Fortinet, in two shapes:
+#   "Please upgrade to FortiADC version 7.2.1 or above"   (product after "to")
+#   "Upgrade FortiOS to version 7.2.2 and above"          (product before "to")
+# Both name the first fixed version, which is the negative point the boundary-value
+# method needs. Notes that only describe a workaround or say the product is end of
+# life carry no version and contribute nothing.
+SOL_PATTERNS = (
+    re.compile(r"[Uu]pgrade\s+to\s+(?:the\s+)?([A-Za-z][\w\-]*(?:\s+[A-Z][\w\-]*)*)"
+               r"\s+(?:firmware\s+)?(?:versions?\s+)?v?(\d+(?:\.\d+)+)"),
+    re.compile(r"[Uu]pgrade\s+(?:the\s+)?([A-Za-z][\w\-]*(?:\s+[A-Z][\w\-]*)*)\s+(?:firmware\s+)?to"
+               r"\s+(?:any\s+version\s+greater\s+than\s+or\s+equal\s+to\s+)?(?:versions?\s+)?v?(\d+(?:\.\d+)+)"),
+)
+
+
+def solutions_note(d):
+    notes = ((d.get("documentnotes") or {}).get("note")) or []
+    for nt in (notes if isinstance(notes, list) else [notes]):
+        if not isinstance(nt, dict):
+            continue
+        if (nt.get("title") or "").lower().startswith("solution"):
+            t = (nt.get("text") or "").strip()
+            # the feed writes a literal "None" where the advisory has no solution text
+            return re.sub(r"\s+", " ", t) if t and t != "None" else None
+    return None
+
+
+def fixed_from_note(text):
+    """[(product_key, version)] named as the first fixed version."""
+    out = set()
+    for pat in SOL_PATTERNS:
+        for m in pat.finditer(text):
+            prod = re.sub(r"\s+(firmware|for\s+\w+)$", "", m.group(1).strip())
+            v = pv(m.group(2))
+            if prod and v:
+                out.add((pkey(prod), v))
+    return out
+
+
+def load_cvrf_negatives():
+    """cve -> {product_key: {versions}} for the versions the Solutions note calls fixed."""
+    naf = defaultdict(lambda: defaultdict(set))
+    ntxt = nver = 0
+    for root, _, files in os.walk(CVRF):
+        for fn in files:
+            if not fn.endswith(".json"):
+                continue
+            d = load(os.path.join(root, fn))
+            if not d:
+                continue
+            v = d.get("vulnerability") or {}
+            ps = (v.get("product_statuses") or {}).get("status")
+            if not ps:
+                continue
+            txt = solutions_note(d)
+            if not txt:
+                continue
+            ntxt += 1
+            got = fixed_from_note(txt)
+            if not got:
+                continue
+            nver += 1
+            cs = v.get("cve") or []
+            for c in [c for c in (cs if isinstance(cs, list) else [cs]) if c]:
+                for pk, ver in got:
+                    naf[c][pk].add(ver)
+    return naf, ntxt, nver
+
+
 # ---------------- CSAF: affected ranges + fixed versions ----------------
 def load_csaf():
     aff = defaultdict(lambda: defaultdict(set))
@@ -207,12 +278,14 @@ def evaluate(aff, naf, label, buckets, dates, split_by_cna=False):
                                    "C2c 別製品のみ")] += 1
                     pts[bk][key]["FN"] += len(P)
                     pts[bk][key]["N"] += len(P) + len(N)
+                    pts[bk][key]["NEG"] += len(N)
                     continue
                 fn = sum(1 for v in P if not tc.match(v))
                 fp = sum(1 for v in N if tc.match(v))
                 pts[bk][key]["FN"] += fn
                 pts[bk][key]["FP"] += fp
                 pts[bk][key]["N"] += len(P) + len(N)
+                pts[bk][key]["NEG"] += len(N)
                 res[bk][key]["一致" if not fn and not fp else
                              ("双方" if fn and fp else ("C3a" if fn else "C3b"))] += 1
     V = ("一致", "C2", "C3a", "C3b", "双方")
@@ -249,7 +322,8 @@ def evaluate(aff, naf, label, buckets, dates, split_by_cna=False):
             print(f"    C2内訳[{bk}] NVD: " + ", ".join(
                 f"{k}={c2sub[bk][k]}({100*c2sub[bk][k]/tt:.0f}%)" for k in C2V))
     print(f"    検証点: " + ", ".join(
-        f"{k}={tpt[k]['N']}点(未検知{tpt[k]['FN']}, 過剰検知{tpt[k]['FP']})" for k in ("nvd", "vc")))
+        f"{k}={tpt[k]['N']}点(うち負例{tpt[k]['NEG']}点; 未検知{tpt[k]['FN']}, 過剰検知{tpt[k]['FP']}"
+        f"={100*tpt[k]['FP']/max(tpt[k]['NEG'],1):.1f}%)" for k in ("nvd", "vc")))
     print()
 
 
@@ -261,10 +335,14 @@ if __name__ == "__main__":
           f"CVE {len(cdates)}件，CVE未採番 {len(cnocve)}件")
     print(f"###   C1a 例: {cnocve[:4]}")
     print()
-    evaluate(caff, {}, "CVRF基準（影響版を個別列挙。修正版を持たないため過剰検知は測定不可）",
+    cnaf, nsol, nfix = load_cvrf_negatives()
+    print(f"### CVRF Solutions 注記: 非空 {nsol}件，修正版を取り出せた {nfix}件，"
+          f"負例を得たCVE {len(cnaf)}件")
+    print()
+    evaluate(caff, cnaf, "CVRF基準（影響版を個別列挙，Solutions注記の修正版を負例とする）",
              B, cdates)
 
-    evaluate(caff, {}, "CVRF基準・採番元別", {"Fortinet採番": ("0000", "9999"),
+    evaluate(caff, cnaf, "CVRF基準・採番元別", {"Fortinet採番": ("0000", "9999"),
                                             "他者採番": ("0000", "9999")}, cdates,
              split_by_cna=True)
 
