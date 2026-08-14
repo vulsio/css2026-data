@@ -49,7 +49,7 @@ DB-primaryが検知しDB-Xが検知しないCVEを\textbf{未検知}，逆を\te
   \footnotesize
   未検知率は基準件数に対する割合，過剰検知率は当該DBの検知件数に対する割合．
   Microsoft Edgeは2台のWindowsに同一バージョンが導入されているため1行にまとめた．
-  $\ddagger$ OpenSSHは一次データソースの網羅性がNVDに劣るため過剰検知率を定義できない（\ref{sec:result}節(6)）．未検知率の分母は基準件数の7件・5件である．
+  $\ddagger$ OpenSSHは一次データソースの網羅性が他に劣るため過剰検知率を定義できない（\ref{sec:result}節(6)）．
 \end{table*}
 
 \paragraph{(1) 5章のC2（製品欠落）はそのまま未検知になるが，VulnCheckが埋める場合もある．}
@@ -86,13 +86,12 @@ macOS 10.13.6ではVulnCheckの1,554件が抑制され，そのうち781件はDB
 \textbf{この抑制規則はNVDが製品を定義しているかだけで決まるため，正しさとは独立に働く}．その代償と限界は\ref{sec:limit}節で述べる．
 
 \paragraph{(6) OpenSSHでは，一次データソースを正解とみなす前提そのものが崩れる．}
-OpenSSHだけは一次データソースの検知件数（8.5p1で7件，9.6p1で5件）がNVD（24件，19件）を下回るため，過剰検知率を定義できない．
-DB-nvdのみが検知した18件・15件はいずれも一次データソースにまったく現れず，すべてMITREが採番したCVEであり，8.5p1では67\%，9.6p1では80\%が2026年公開分である．
-OpenSSH自身は10.5のリリースノートで，AIによる報告の多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．
-ここで観測されているのは何を脆弱性と数えるかについて上流と第三者採番者の判断が割れている状態であり，どちらを正解とするかは事前に決められない．
+OpenSSHだけは一次データソースの検知件数がどのDBよりも少ない．8.5p1ではDB-primary 7件に対しDB-nvd 24件，DB-nvd+vc 26件，\textbf{DB-vcは94件}（9.6p1では5件に対し19件，22件，\textbf{95件}）であり，差を過剰検知と呼べない．
+DB-nvdのみが検知した18件・15件はいずれも一次データソースに現れず，すべてMITREが採番したCVEで，8.5p1では67\%，9.6p1では80\%が2026年公開分である．
+OpenSSH自身は10.5のリリースノートで，AIによる報告の多くは現実的な脅威モデルでは影響がないと判断していると述べている\cite{openssh-rel105}．何を脆弱性と数えるかで上流と第三者採番者の判断が割れており，どちらを正解とするかは事前に決められない．
 未検知の内訳も異質である．DB-nvdの取りこぼしは各1件で，8.5p1ではCVEが採番されておらずNVDには原理的に存在し得ないエントリ（\ref{sec:c1c3}節のC1a）である．
 DB-vcは4件・3件を取りこぼし，regreSSHionとTerrapinを含む．
-原因はベンダ名の不一致で，VulnCheckは \texttt{openssh:openssh}，NVDと一次データソースは \texttt{openbsd:openssh} を用いる（\ref{sec:setup}節の \texttt{mac\_os\_x} と同種である）．
+原因はベンダ名の不一致で，VulnCheckは \texttt{openssh:openssh}，他は \texttt{openbsd:openssh} を用いる（\ref{sec:setup}節の \texttt{mac\_os\_x} と同種）．
 \textbf{同じ製品を指すCPEが供給源ごとに違うだけで，最も広く知られた脆弱性が検知されなくなる}．
 
 \subsection{どの時点までのNVDを信頼してよいか}
