@@ -24,7 +24,7 @@
 \end{list}
 
 一次データソースには，FortinetのPSIRT Advisory（CVRFおよびCSAF\cite{vuls-data-raw-fortinet-cvrf,vuls-data-raw-fortinet-csaf}）とCiscoのopenVuln API由来のJSON\cite{vuls-data-raw-cisco-json}を用いる．
-CVRFは影響を受けるバージョンを列挙するが修正版を持たないため過剰検知は測れず，CSAFは \texttt{known\_not\_affected} として修正版を明示するため過剰検知も測れる．製品情報を伴うCVRFは616件，CSAFは173件である．
+CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，修正版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．負例を作れないため，CVRF基準では過剰検知を測れない．CSAFは \texttt{known\_not\_affected} で修正版を機械可読に与えるため過剰検知も測れる．製品情報を伴うCVRFは616件，CSAFは173件である．
 Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙し\textbf{CPEを持たない}ため，製品名からCPEへの対応付けを別途実装した．285,161件の \texttt{productNames} の97.5\%が対応付くが，アドバイザリ単位では31.9\%にとどまる．
 このためCiscoについてはC1とC4を測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
@@ -95,7 +95,7 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
   \end{center}
   \footnotesize
   一致・C2・C3a・C3bは(CVE,製品)組に対する割合，未検知率・過剰検知率は検証点に対する割合．
-  CVRFは修正版を持たないため過剰検知（C3b）を測定できず，製品情報を伴う2022年以降を対象とする．
+  CVRFは修正版を機械可読な形で持たないため過剰検知（C3b）を測定できず，製品情報を伴う2022年以降を対象とする．
 \end{table*}
 
 \paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
