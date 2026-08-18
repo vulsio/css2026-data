@@ -52,15 +52,15 @@ Future Corporation}
 \author{篠原 俊一}{Shunichi Shinohara}{FUTURE}[s.shinohara.yx@future.co.jp]
 
 \begin{abstract}
-我々はOSS脆弱性スキャナVulsと脆弱性DBを開発・運用している．
-CVE報告件数の急増を受け，検知に不可欠な「どの製品のどの版が影響を受けるか」という条件の供給源を調べた．
-NVDとVulnCheck NVD++の全件（取下げ除き353,704件）では，NVDによるCPE適用条件の付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年公開分の37.3\%をNVD自身が解析対象外と明示していた．
+我々はOSS脆弱性スキャナVulsと脆弱性DBを運用している．
+CVE急増を受け，検知に不可欠な「どの製品のどの版が影響を受けるか」の供給源を調べた．
+NVD・VulnCheck NVD++の全件（取下げ除き353,704件）では，NVDのCPE適用条件の付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年分の37.3\%はNVD自身が解析対象外と明示していた．
 ただし付与率は検知精度を予測しない．
-入力データソースのみを変えたDBで10環境を検知すると，NVDのみでの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの68.8\%まで開き，後者の93.5\%は組込みOSS部品のCVEであった．
+データソースのみを変えたDBで10環境を検知すると，NVDのみの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの68.8\%まで開き，その93.5\%は組込みOSS部品であった．
+macOSでは下限を持たないCPEにより過剰検知が81.5\%に達した．
 VulnCheckはEdgeの未検知を96.2\%から0.4\%へ下げる一方，Windowsでは過剰検知率70.6\%を生み，独自CPEは日単位で入れ替わる．
-一次データソースが常に優るわけでもない．
-どの供給源を使うべきかは製品ごとに異なる．
-本稿はその判断に要る測定と，一次データソースをLLMで再現可能に構造化する方式を示す．
+一次データソースが常に優るわけでもない．供給源の選択は製品ごとに異なる．
+本稿はその判断に要る測定と，一次データソースをLLMで構造化する方式を示す．
 \end{abstract}
 
 %% キーワード (1--5単語) の記載は任意．
@@ -72,12 +72,12 @@ VulnCheckはEdgeの未検知を96.2\%から0.4\%へ下げる一方，Windowsで�
 \begin{eabstract}
 We develop Vuls, an open-source vulnerability scanner, and its database.
 Given the CVE surge, we ask where a scanner should get its detection conditions.
-Across all 353,704 non-rejected entries, NVD's CPE applicability coverage fell from 100\% up to 2023 to 56.1\% in 2026, with 37.3\% of 2025 entries marked Deferred.
+Across all 353,704 non-rejected entries, NVD's CPE coverage fell from 100\% through 2023 to 56.1\% in 2026, 37.3\% of 2025 entries marked Deferred.
 Coverage, however, does not predict detection accuracy.
-Across ten environments scanned with databases differing only in input source, the miss rate under NVD alone ranges from 1.3\% on Windows Server 2022 to 68.8\% on an end-of-life FortiOS, 93.5\% of the latter being embedded OSS components.
-VulnCheck cuts Microsoft Edge's miss rate from 96.2\% to 0.4\%, yields a 70.6\% false-positive rate on Windows, and rewrites its own CPEs daily.
-Nor is the primary source always better.
-Which source to use differs by product.
+Across ten environments differing only in input source, NVD's miss rate ranges from 1.3\% on Windows Server 2022 to 68.8\% on an end-of-life FortiOS, 93.5\% of the latter embedded OSS components.
+How it errs differs too: on macOS, CPEs unbounded below drive an 81.5\% false-positive rate.
+VulnCheck cuts Edge's miss rate from 96.2\% to 0.4\%, yields 70.6\% false positives on Windows, and rewrites its own CPEs daily.
+Nor is the primary source always better; the choice differs by product.
 We report the measurements that decision needs and a reproducible LLM-assisted method for structuring primary sources.
 \end{eabstract}
 

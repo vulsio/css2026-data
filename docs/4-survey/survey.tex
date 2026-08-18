@@ -1,12 +1,12 @@
 \section{検知条件の供給実態の定量調査}
 \label{sec:supply}
 
-本章は検知条件の供給を，NVD・VulnCheck内部の情報だけによる全件調査（\ref{sec:year}〜\ref{sec:grain}節）と，一次データソースを基準とする比較（\ref{sec:c1c3}〜\ref{sec:c4}節）の2つの角度から測る．
+本章は検知条件の供給を，NVD・VulnCheck内部の情報だけによる全件調査（\ref{sec:year}〜\ref{sec:grain}節）と，一次データソースとの比較（\ref{sec:c1c3}〜\ref{sec:c4}節）の2つから測る．
 
 \subsection{調査対象と方法}
 \label{sec:method3}
 
-全件調査の対象は，我々が運用するデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショットである．
+全件調査の対象は，我々のデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショットである．
 両者のCVE ID集合を比べると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件で，VulnCheck NVD++ の収録IDはNVDのID空間を超えない．
 集計では \texttt{vulnStatus} が \texttt{Rejected} の17,712件を除外し353,704件を対象とし，各エントリの \texttt{configurations}（NVD）と \texttt{vcConfigurations}（VulnCheck独自）から \texttt{vulnerable: true} の \texttt{cpeMatch} の個数とバージョン指定の種別を数えた\footnote{取下げエントリは製品情報を持たないことが正常であり，含めると付与率を不当に低く見せる．実例として，Fortinet採番のCVEには2025年に一括取下げされたものが866件含まれ，除外しない場合Fortinetの付与率は32.8\%，除外後は99.6\%と算出される．}．
 
@@ -27,7 +27,7 @@ CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず�
 Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で列挙しCPEを持たないため製品名からCPEへの対応付けを別途実装したが，対応付くのはアドバイザリ単位では31.9\%にとどまる．そこでCiscoはC1とC4のみ測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
 C2・C3の判定には\textbf{境界値法}を用いる．
-バージョン範囲を連続区間として比較すると，Fortinetの \texttt{<=6.4.15} とNVDの \texttt{versionEndExcluding: 6.4.16} のように実在する版の集合としては同一のものが「NVD側が広い」と誤判定されるためである．
+連続区間として比較すると，Fortinetの \texttt{<=6.4.15} とNVDの \texttt{versionEndExcluding: 6.4.16} のように，実在する版の集合としては同一のものが「NVD側が広い」と誤判定されるためである．
 そこで (CVE, 製品) ごとに影響ありとする版を検知されるべき点，影響なしとする版を検知されるべきでない点とし，各点で相手側の条件の真偽が一致するかを評価する．
 製品の突合はCPEの製品部から区切り文字を除いた文字列で行い，版表現が解析できない組は除外した．
 さらに結果をCVEの採番元（NVDの \texttt{sourceIdentifier}）で層別する．Fortinet自身が採番したCVEと，Fortinet製品に組み込まれた部品に対して他者が採番したCVE（以下，\textbf{組込み部品のCVE}）ではNVDの振る舞いが大きく異なるためである．
@@ -45,20 +45,17 @@ C4はGit履歴から測る．スナップショットを1日2回取得しGitで�
 \paragraph{(2) 2024年を境に急落し，待っても解消しない．}
 \texttt{configurations} に \texttt{vulnerable} な \texttt{cpeMatch} を1つ以上持つ割合は2024年80.5\%，2025年62.6\%，2026年56.1\%と低下し，低下分はほぼそのまま \texttt{Deferred} の増加（19.5\%，37.3\%，34.8\%）で説明される（2026年は別途9.3\%が解析待ちである）．
 2025年公開分は，公開から平均350日が経過してなお37.3\%が \texttt{Deferred} のままである．
-2025年以降のNVDは約4割弱が将来にわたって検知条件を供給されないと想定して設計すべきである．
 未付与エントリの滞留も長く，\texttt{Awaiting Analysis} で中位数43日，\texttt{Deferred} の41,363件は中位数286日が経過している．
-新規公開のCVEは，公開後1〜4か月はNVDの検知条件が存在しない前提で設計する必要がある．
+2025年以降のNVDは約4割弱が将来にわたって供給されず，新規公開のCVEも公開後1〜4か月は検知条件が存在しない前提で設計する必要がある．
 
 \paragraph{(3) VulnCheckは補完するが埋め切らない．}
 \texttt{vcConfigurations} を加えると付与率は2024年88.3\%，2025年76.1\%，2026年78.5\%へ上がり，NVDが付与せずVulnCheckのみが付与したエントリは3,083件・6,492件・10,058件（同年の7.7\%・13.5\%・22.4\%）である．それでも2025年以降は2割強が両者ともに未付与である．
-VulnCheckの価値は，最終的な網羅性よりも公開直後の期間に集中する（\ref{sec:c4}節）．
 
 \subsection{付与された条件の粒度とCNA別の偏り}
 \label{sec:grain}
 
 CPE適用条件が存在することとバージョンを特定できることは同じではない．
 2024年以降に公開された132,928件のうち，バージョン範囲または特定バージョンで表現されているのはNVDで63.9\%，VulnCheckを加えて77.8\%にとどまる．
-付与率の向上が検知精度の向上を意味するとは限らない．
 
 採番CNA別（\texttt{sourceIdentifier} による）の差は極端である．
 Microsoft 99.7\%，Fortinet 99.6\%，Apple 99.4\%と付与率がほぼ維持される一方，Cisco 77.2\%（\texttt{Deferred} 15.0\%），JPCERT/CC採番は39.1\%（同59.7\%）でVulnCheckを加えても48.4\%にとどまる．
@@ -105,11 +102,10 @@ VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの�
 
 \paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%にとどまる．}
 \ref{sec:grain}節でFortinetの付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
-C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{forticlient} の \texttt{target\_sw} で区別するため一致しない（212組中46組）．
+C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{target\_sw} で区別するため一致しない（212組中46組）．
 付与率は検知可能性の上限にすぎない．
 一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から89.9\%へ，C2を15.8\%から0.0\%へ，未検知率を10.8\%から1.5\%へ改善する．
-過剰検知はCSAF基準で負例1,075点中NVD・VulnCheckとも12点（1.1\%），CVRF基準で負例400点中NVD 4点・VulnCheck 7点であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった．
-ただし粗いCPEの影響は\ref{sec:eval}章で改めて測る．
+過剰検知はCSAF基準で負例1,075点中NVD・VulnCheckとも12点（1.1\%），CVRF基準で負例400点中NVD 4点・VulnCheck 7点であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった（粗いCPEの影響は\ref{sec:eval}章で改めて測る）．
 
 \subsection{付与の遅延と安定性}
 \label{sec:c4}
