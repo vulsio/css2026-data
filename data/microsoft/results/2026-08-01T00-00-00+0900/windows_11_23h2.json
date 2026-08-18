@@ -37,9 +37,9 @@
         "fd17:625c:f037:2:3272:5452:c3ed:6d46",
         "fd17:625c:f037:2:a90f:2095:d533:bc94"
     ],
-    "reportedAt": "2026-08-11T22:10:05.750331454+09:00",
+    "reportedAt": "2026-08-18T16:13:11.564283354+09:00",
     "reportedVersion": "v0.40.1",
-    "reportedRevision": "build-20260811_220337_2015b60",
+    "reportedRevision": "build-css2026_a13894b",
     "reportedBy": "lize",
     "errors": [],
     "warnings": [],
@@ -109510,6 +109510,7 @@
                 "SkipUpdate": true
             },
             "confidenceScoreOver": 80,
+            "refreshCve": true,
             "lang": "en",
             "trivyCacheDBDir": "/home/mainek00n/.cache/trivy",
             "trivyDBRepositories": [

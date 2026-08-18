@@ -28,9 +28,9 @@
     "scannedIpv6Addrs": [
         "fd17:625c:f037:2:da8e:fc12:4d8a:8aa5"
     ],
-    "reportedAt": "2026-08-12T13:00:51.538570718+09:00",
+    "reportedAt": "2026-08-18T16:13:48.269574306+09:00",
     "reportedVersion": "v0.40.1",
-    "reportedRevision": "build-20260811_220337_2015b60",
+    "reportedRevision": "build-css2026_a13894b",
     "reportedBy": "lize",
     "errors": [],
     "warnings": [],
@@ -22534,16 +22534,6 @@
                     "wordpress": {},
                     "portscan": {},
                     "windows": {}
-                },
-                "ios_xe": {
-                    "serverName": "ios_xe",
-                    "cpeNames": [
-                        "cpe:/o:cisco:ios_xe:16.12.1"
-                    ],
-                    "type": "pseudo",
-                    "wordpress": {},
-                    "portscan": {},
-                    "windows": {}
                 }
             }
         },
@@ -22560,6 +22550,7 @@
                 "SkipUpdate": true
             },
             "confidenceScoreOver": 80,
+            "refreshCve": true,
             "lang": "en",
             "trivyCacheDBDir": "/home/mainek00n/.cache/trivy",
             "trivyDBRepositories": [

@@ -10,6 +10,8 @@
 #   slot 03 = NVD + VulnCheck   （vuls.nvd-vulncheck.db）
 #
 # スキャン結果（scannedCves 以外）は 4 つの slot で共通なので、差は DB だけになる。
+# -refresh-cve は必須。付けないと report は結果 JSON の scannedCves に追記するため、
+# DB を作り直して流し直したときに古い検知が残り、結果が累積する。
 # 先に data/bin/unpack-db.sh を実行しておくこと。
 #
 # data/<vendor>/config.<db>.toml はこのスクリプトが生成する（手で編集しない）。
@@ -49,6 +51,7 @@ EOF
 		(cd "$REPO_ROOT" && "$VULS" report \
 			-config="data/$vendor/config.$db.toml" \
 			-results-dir="$DATA_DIR/$vendor/results" \
+			-refresh-cve \
 			-to-localfile \
 			-format-json \
 			"$ts")
