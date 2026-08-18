@@ -2,7 +2,7 @@
 \label{sec:intro}
 
 我々はオープンソース脆弱性スキャナ Vuls\cite{vuls} と，その脆弱性データベース群を継続的に開発・運用している．
-前稿\cite{nakaoka2025}では，一次データソース（ベンダやプロジェクトが自ら公開するセキュリティアドバイザリ）を可能な限り直接収集し，取得したままの \texttt{vuls-data-raw} 形式と共通スキーマの \texttt{vuls-data-extracted} 形式に分けてGitで履歴管理する「データハーベスト」方式を提案した\cite{vuls-data-update,vuls-data-db}．
+前稿\cite{nakaoka2025}では，一次データソース（ベンダ等が自ら公開するアドバイザリ）を可能な限り直接収集し，取得したままの \texttt{vuls-data-raw} 形式と共通スキーマの \texttt{vuls-data-extracted} 形式に分けてGitで履歴管理する「データハーベスト」方式を提案した\cite{vuls-data-update,vuls-data-db}．
 本稿はその基盤の上で，「検知条件を誰から得るべきか」という問いを定量的に扱う．
 
 脆弱性スキャナが判定に用いる情報を本稿では\textbf{検知条件}と呼ぶ．
