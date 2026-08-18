@@ -108,13 +108,13 @@ VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの�
 C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{forticlient} の \texttt{target\_sw} で区別するため一致しない（212組中46組）．
 付与率は検知可能性の上限にすぎない．
 一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から89.9\%へ，C2を15.8\%から0.0\%へ，未検知率を10.8\%から1.5\%へ改善する．
-過剰検知は負例1,075点中12点（1.1\%）でVulnCheckも同数，CVRF基準でも400点中4点・7点であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった．
+過剰検知はCSAF基準で負例1,075点中NVD・VulnCheckとも12点（1.1\%），CVRF基準で負例400点中NVD 4点・VulnCheck 7点であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった．
 ただし粗いCPEの影響は\ref{sec:eval}章で改めて測る．
 
 \subsection{付与の遅延と安定性}
 \label{sec:c4}
 
-公開から検知条件が初めて現れるまでの日数をGit履歴から測った\footnote{中位数／90\%点／打切り率の順に記す．全体はGit履歴開始以降のCVEから25件ごとに抽出した標本（NVD 2,773件，VulnCheck 2,549件），FortinetとCiscoは全件である．}．
+公開から検知条件が初めて現れるまでの日数をGit履歴から測った\footnote{全体はGit履歴開始以降のCVEから25件ごとに抽出した標本（NVD 2,773件，VulnCheck 2,549件），FortinetとCiscoは全件である．}．
 
 全体では，NVDは中位数7日を要し42.6\%が執筆時点でも未付与であるのに対し，VulnCheckは中位数1日で未付与は22.6\%にとどまる．VulnCheckの価値は網羅性ではなく初動の速さにある．
 
