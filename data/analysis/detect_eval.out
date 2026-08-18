@@ -1,8 +1,8 @@
 # 製品単位の検知件数
 server                product                          primary       NVD VulnCheck    NVD+VC
-macos                 apple:macos                          736       889      1112       945
+macos                 apple:macos                          586       889      1112       945
 macos                 apple:safari                         163       209      1167       233
-macos_x               apple:macos                          697      2035      2858      2118
+macos_x               apple:macos                          445      2035      2858      2118
 macos_x               apple:safari                         657       677      1516       707
 ios                   cisco:ios                            136        82       432       115
 ios_xe                cisco:ios_xe                         214       156       252       194
@@ -18,15 +18,15 @@ openssh_9-6p1         openbsd:openssh                        5        19        
 
 # 一次データソースDBを基準とした一致・未検知・過剰検知
 server                product                       対象             基準     一致     未検知     過剰     未検知率     過剰率
-macos                 apple:macos                   NVD           736    642      94    247     12.8    27.8
-macos                 apple:macos                   VulnCheck     736    652      84    460     11.4    41.4
-macos                 apple:macos                   NVD+VC        736    646      90    299     12.2    31.6
+macos                 apple:macos                   NVD           586    547      39    342      6.7    38.5
+macos                 apple:macos                   VulnCheck     586    558      28    554      4.8    49.8
+macos                 apple:macos                   NVD+VC        586    548      38    397      6.5    42.0
 macos                 apple:safari                  NVD           163    136      27     73     16.6    34.9
 macos                 apple:safari                  VulnCheck     163    158       5   1009      3.1    86.5
 macos                 apple:safari                  NVD+VC        163    159       4     74      2.5    31.8
-macos_x               apple:macos                   NVD           697    524     173   1511     24.8    74.3
-macos_x               apple:macos                   VulnCheck     697    369     328   2489     47.1    87.1
-macos_x               apple:macos                   NVD+VC        697    532     165   1586     23.7    74.9
+macos_x               apple:macos                   NVD           445    377      68   1658     15.3    81.5
+macos_x               apple:macos                   VulnCheck     445    286     159   2572     35.7    90.0
+macos_x               apple:macos                   NVD+VC        445    391      54   1727     12.1    81.5
 macos_x               apple:safari                  NVD           657    595      62     82      9.4    12.1
 macos_x               apple:safari                  VulnCheck     657    556     101    960     15.4    63.3
 macos_x               apple:safari                  NVD+VC        657    624      33     83      5.0    11.7
@@ -62,15 +62,15 @@ openssh_9-6p1         openbsd:openssh               VulnCheck       5      2    
 openssh_9-6p1         openbsd:openssh               NVD+VC          5      5       0     17      0.0    77.3
 
 # 未検知CVEの公開年分布（未検知/基準）
-macos                 apple:macos                   NVD       -2023:2/2(100.0%)  2024:55/110(50.0%)  2025:25/381(6.6%)  2026:12/243(4.9%)
-macos                 apple:macos                   VulnCheck -2023:2/2(100.0%)  2024:55/110(50.0%)  2025:23/381(6.0%)  2026:4/243(1.6%)
-macos                 apple:macos                   NVD+VC    -2023:2/2(100.0%)  2024:55/110(50.0%)  2025:21/381(5.5%)  2026:12/243(4.9%)
+macos                 apple:macos                   NVD       2024:7/9(77.8%)  2025:20/334(6.0%)  2026:12/243(4.9%)
+macos                 apple:macos                   VulnCheck 2024:7/9(77.8%)  2025:17/334(5.1%)  2026:4/243(1.6%)
+macos                 apple:macos                   NVD+VC    2024:7/9(77.8%)  2025:19/334(5.7%)  2026:12/243(4.9%)
 macos                 apple:safari                  NVD       2024:1/1(100.0%)  2025:4/84(4.8%)  2026:22/78(28.2%)
 macos                 apple:safari                  VulnCheck 2024:1/1(100.0%)  2025:4/84(4.8%)  2026:0/78(0.0%)
 macos                 apple:safari                  NVD+VC    2024:1/1(100.0%)  2025:3/84(3.6%)  2026:0/78(0.0%)
-macos_x               apple:macos                   NVD       -2023:121/500(24.2%)  2024:8/102(7.8%)  2025:44/95(46.3%)
-macos_x               apple:macos                   VulnCheck -2023:227/500(45.4%)  2024:49/102(48.0%)  2025:52/95(54.7%)
-macos_x               apple:macos                   NVD+VC    -2023:116/500(23.2%)  2024:8/102(7.8%)  2025:41/95(43.2%)
+macos_x               apple:macos                   NVD       -2023:68/445(15.3%)
+macos_x               apple:macos                   VulnCheck -2023:159/445(35.7%)
+macos_x               apple:macos                   NVD+VC    -2023:54/445(12.1%)
 macos_x               apple:safari                  NVD       -2023:33/430(7.7%)  2024:4/57(7.0%)  2025:3/92(3.3%)  2026:22/78(28.2%)
 macos_x               apple:safari                  VulnCheck -2023:93/430(21.6%)  2024:3/57(5.3%)  2025:5/92(5.4%)  2026:0/78(0.0%)
 macos_x               apple:safari                  NVD+VC    -2023:30/430(7.0%)  2024:1/57(1.8%)  2025:2/92(2.2%)  2026:0/78(0.0%)
@@ -107,15 +107,15 @@ openssh_9-6p1         openbsd:openssh               NVD+VC    2024:0/2(0.0%)  20
 
 # 未検知CVEの採番元（自社CNA採番か、組込み部品として他者が採番したものか）
 server                product                       対象            未検知     自社採番     他者採番      他者の割合
-macos                 apple:macos                   NVD            94       63       31       33.0
-macos                 apple:macos                   VulnCheck      84       52       32       38.1
-macos                 apple:macos                   NVD+VC         90       59       31       34.4
+macos                 apple:macos                   NVD            39       12       27       69.2
+macos                 apple:macos                   VulnCheck      28        0       28      100.0
+macos                 apple:macos                   NVD+VC         38       11       27       71.1
 macos                 apple:safari                  NVD            27       24        3       11.1
 macos                 apple:safari                  VulnCheck       5        0        5      100.0
 macos                 apple:safari                  NVD+VC          4        1        3       75.0
-macos_x               apple:macos                   NVD           173      121       52       30.1
-macos_x               apple:macos                   VulnCheck     328      236       92       28.0
-macos_x               apple:macos                   NVD+VC        165      114       51       30.9
+macos_x               apple:macos                   NVD            68       22       46       67.6
+macos_x               apple:macos                   VulnCheck     159       79       80       50.3
+macos_x               apple:macos                   NVD+VC         54        8       46       85.2
 macos_x               apple:safari                  NVD            62       54        8       12.9
 macos_x               apple:safari                  VulnCheck     101       85       16       15.8
 macos_x               apple:safari                  NVD+VC         33       25        8       24.2
@@ -151,9 +151,9 @@ openssh_9-6p1         openbsd:openssh               VulnCheck       3        0  
 openssh_9-6p1         openbsd:openssh               NVD+VC          0        0        0        ---
 
 # VulnCheckの上積み（NVD+VC - NVD）と、verified抑制で落ちた分（VC - NVD+VC）
-macos                 apple:macos                   上積み=   56(一次DBにもある=    4)  抑制=  193(一次DBにもある=   11)
+macos                 apple:macos                   上積み=   56(一次DBにもある=    1)  抑制=  193(一次DBにもある=   11)
 macos                 apple:safari                  上積み=   24(一次DBにもある=   23)  抑制=  939(一次DBにもある=    1)
-macos_x               apple:macos                   上積み=   83(一次DBにもある=    8)  抑制= 1501(一次DBにもある=   10)
+macos_x               apple:macos                   上積み=   83(一次DBにもある=   14)  抑制= 1501(一次DBにもある=    5)
 macos_x               apple:safari                  上積み=   30(一次DBにもある=   29)  抑制=  891(一次DBにもある=    2)
 ios                   cisco:ios                     上積み=   33(一次DBにもある=   10)  抑制=  356(一次DBにもある=   26)
 ios_xe                cisco:ios_xe                  上積み=   38(一次DBにもある=   20)  抑制=  112(一次DBにもある=   31)

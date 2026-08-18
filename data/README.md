@@ -97,7 +97,10 @@ vuls db compress --dbpath data/db/vuls.<name>.db   # .db を compact し .db.zst
 ```
 
 `ghcr.io/vulsio/vuls-data-db:vuls-data-extracted-apple-security-releases` は空の
-プレースホルダなので、apple だけは raw から extract する必要がある。
+プレースホルダなので、apple だけは raw から extract する必要がある。extract に用いた
+抽出器は vuls-data-update の `MaineK00n/apple-available-for`（PR #940、`2fdc8d0e`）で、
+`#917` が本流に入ったあとの `#939` → `#940` を積んだもの。検知そのものは vuls 側の
+バージョン非依存なので、同梱の `data/vuls.zst` はそのまま使える。
 OpenSSH は raw の `raw/` をモデルによる変換で作る構成のため、fetch だけでは
 再生成できない（詳細は vuls-data-update の PR #928 を参照）。
 
