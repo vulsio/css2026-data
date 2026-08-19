@@ -28,7 +28,7 @@
     "scannedIpv6Addrs": [
         "fd17:625c:f037:2:da8e:fc12:4d8a:8aa5"
     ],
-    "reportedAt": "2026-08-18T16:13:10.682319618+09:00",
+    "reportedAt": "2026-08-19T16:41:09.776515824+09:00",
     "reportedVersion": "v0.40.1",
     "reportedRevision": "build-css2026_a13894b",
     "reportedBy": "lize",
@@ -7293,7 +7293,7 @@
                     "severity": "",
                     "issued": "2026-01-13T00:00:00Z",
                     "updated": "2026-02-23T00:00:00Z",
-                    "description": "A heap-based buffer overflow vulnerability [CWE-122] in FortiOS and FortiSwitchManager cw_acd daemon may allow a remote unauthenticated attacker to execute arbitrary code or commands via specifically crafted requests.The presence of security controls such as ASLR and PIE considerably raises the complexity and preparation effort required for exploitation."
+                    "description": ""
                 }
             ],
             "cveContents": {
@@ -7646,7 +7646,7 @@
                     "severity": "",
                     "issued": "2026-07-14T00:00:00Z",
                     "updated": "2026-07-14T00:00:00Z",
-                    "description": "A buffer over-read vulnerability [CWE-126] in FortiOS, FortiProxy, and FortiSASE may allow an authenticated remote attacker to return a portion of device memory in the redirect response via submitting a specially crafted request."
+                    "description": ""
                 }
             ],
             "cveContents": {
@@ -8631,7 +8631,7 @@
                     "severity": "",
                     "issued": "2026-04-14T00:00:00Z",
                     "updated": "2026-04-14T00:00:00Z",
-                    "description": ""
+                    "description": "An Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal') [CWE-22] in the command line interpreter of FortiOS, FortiPAM, FortiProxy and FortiSwitchManager may allow a privileged attacker to achieve arbitrary write or delete files via specifically crafted arguments to existing commands."
                 }
             ],
             "cveContents": {
@@ -8691,7 +8691,7 @@
                     "severity": "",
                     "issued": "2026-02-10T00:00:00Z",
                     "updated": "2026-02-10T00:00:00Z",
-                    "description": "An Improper Verification of Source of a Communication Channel vulnerability [CWE-940] in FortiOS FSSO Terminal Services Agent may allow an authenticated user with knowledge of FSSO policy configurations to gain unauthorized access to protected network resources via crafted requests."
+                    "description": ""
                 }
             ],
             "cveContents": {
@@ -8811,7 +8811,7 @@
                     "severity": "",
                     "issued": "2026-02-10T00:00:00Z",
                     "updated": "2026-02-10T00:00:00Z",
-                    "description": "A Use of Externally-Controlled Format String vulnerability [CWE-134] in FortiGate may allow an authenticated admin to execute unauthorized code or commands via specifically crafted configuration."
+                    "description": ""
                 }
             ],
             "cveContents": {
@@ -9221,6 +9221,59 @@
                         "lastModified": "1000-01-01T00:00:00Z",
                         "optional": {
                             "vuls2-sources": "[{\"root_id\":\"FG-IR-26-154\",\"source_id\":\"fortinet-cvrf\",\"segment\":{\"ecosystem\":\"cpe\"}},{\"root_id\":\"FG-IR-26-154\",\"source_id\":\"fortinet-csaf\",\"segment\":{\"ecosystem\":\"cpe\",\"tag\":\"CVE-2026-59840\"}}]"
+                        }
+                    }
+                ]
+            },
+            "cpeURIs": [
+                "cpe:/o:fortinet:fortios:7.0.1"
+            ]
+        },
+        "FG-IR-16-090": {
+            "cveID": "FG-IR-16-090",
+            "confidences": [
+                {
+                    "score": 100,
+                    "detectionMethod": "FortinetExactVersionMatch"
+                }
+            ],
+            "distroAdvisories": [
+                {
+                    "advisoryID": "FG-IR-16-090",
+                    "severity": "",
+                    "issued": "2019-07-24T00:00:00Z",
+                    "updated": "2019-07-24T00:00:00Z",
+                    "description": "FortiOS by default enables TCP timestamp response, which may lead to information disclosure. The TCP timestamp response can be used to approximate the FortiOS device uptime, potentially aiding in further attacks. This may be used by an attacker to estimate if FortiOS has not been upgraded to the latest version, because upgrading resets the device's uptime."
+                }
+            ],
+            "cveContents": {
+                "fortinet": [
+                    {
+                        "type": "fortinet",
+                        "cveID": "FG-IR-16-090",
+                        "title": "",
+                        "summary": "FortiOS by default enables TCP timestamp response, which may lead to information disclosure. The TCP timestamp response can be used to approximate the FortiOS device uptime, potentially aiding in further attacks. This may be used by an attacker to estimate if FortiOS has not been upgraded to the latest version, because upgrading resets the device's uptime.",
+                        "cvss2Score": 0,
+                        "cvss2Vector": "",
+                        "cvss2Severity": "",
+                        "cvss3Score": 0,
+                        "cvss3Vector": "",
+                        "cvss3Severity": "",
+                        "cvss40Score": 0,
+                        "cvss40Vector": "",
+                        "cvss40Severity": "",
+                        "sourceLink": "https://www.fortiguard.com/psirt/FG-IR-16-090",
+                        "references": [
+                            {
+                                "link": "https://www.fortiguard.com/psirt/FG-IR-16-090",
+                                "source": "FORTINET",
+                                "refID": "FG-IR-16-090"
+                            }
+                        ],
+                        "published": "2019-07-24T00:00:00Z",
+                        "lastModified": "2019-07-24T00:00:00Z",
+                        "optional": {
+                            "vuls2-sources": "[{\"root_id\":\"FG-IR-16-090\",\"source_id\":\"fortinet-cvrf\",\"segment\":{\"ecosystem\":\"cpe\"}}]"
                         }
                     }
                 ]
