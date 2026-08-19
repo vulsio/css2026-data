@@ -75,8 +75,8 @@ python3 data/bin/summary.py       # 結果を突き合わせて表示
 
 必要なツール:
 
-- `vuls-data-update` … Apple と OpenSSH の fetch / extract がまだ本流に入っていないため、
-  2 本のブランチをマージしたものが要る（下記「vuls をビルドし直す」と同じマージ）。
+- `vuls-data-update` … `nightly` の `a1fb26a2`（Apple #917/#939/#940、OpenSSH #928、
+  Fortinet 補完表 #941 がすべて入っている）。
 - `vuls`（nightly / vuls2）… `github.com/MaineK00n/vuls2`
   （`663ae1050b94a610d00c569a3dab1503a07e8a65`）。DB の init / add / compress に使う。
 
@@ -85,10 +85,13 @@ python3 data/bin/summary.py       # 結果を突き合わせて表示
 vuls-data-update dotgit pull --dir data/db --checkout <commit> --restore \
     ghcr.io/vulsio/vuls-data-db:<tag>
 
-# 2. kind=raw の行だけ、手元で extract する（現状 apple のみ）
+# 2. kind=raw の行だけ、手元で extract する（apple と fortinet-cvrf）
 vuls-data-update extract apple-security-releases \
     data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-raw-apple-security-releases \
     --dir data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-extracted-apple-security-releases
+vuls-data-update extract fortinet-cvrf \
+    data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-raw-fortinet-cvrf \
+    --dir data/db/ghcr.io/vulsio/vuls-data-db/vuls-data-extracted-fortinet-cvrf
 
 # 3. DB ごとに、sources.tsv の上の行から順に投入して圧縮する
 vuls db init     --dbpath data/db/vuls.<name>.db
@@ -97,10 +100,11 @@ vuls db compress --dbpath data/db/vuls.<name>.db   # .db を compact し .db.zst
 ```
 
 `ghcr.io/vulsio/vuls-data-db:vuls-data-extracted-apple-security-releases` は空の
-プレースホルダなので、apple だけは raw から extract する必要がある。extract に用いた
-抽出器は vuls-data-update の `MaineK00n/apple-available-for`（PR #940、`2fdc8d0e`）で、
-`#917` が本流に入ったあとの `#939` → `#940` を積んだもの。検知そのものは vuls 側の
-バージョン非依存なので、同梱の `data/vuls.zst` はそのまま使える。
+プレースホルダなので、apple は raw から extract する必要がある。fortinet-cvrf も
+raw から取る。従来ここで固定していた extracted アーティファクトの commit
+（`b915804`、2026-08-10）は #941 の補完表の作り直しより前のもので、5 章の数値は
+作り直したあとの抽出器で算出しているためである（`data/analysis/fortinet_extracted.out`
+も同じ）。
 OpenSSH は raw の `raw/` をモデルによる変換で作る構成のため、fetch だけでは
 再生成できない（詳細は vuls-data-update の PR #928 を参照）。
 
@@ -110,36 +114,21 @@ OpenSSH は raw の `raw/` をモデルによる変換で作る構成のため�
 `-trimpath -ldflags "-s -w"` で strip したもので、strip の有無で検知結果は変わらない
 ことを確認している。
 
-Apple と OpenSSH の検知はいずれも未マージの PR に載っており、**両方を含むコミットが
-上流に存在しない**ため、2 つのリポジトリでそれぞれ 2 本のブランチをマージする必要がある。
+Apple と OpenSSH の検知に必要な PR はすべて上流にマージされたので、ブランチを
+マージして回る必要はなくなった。
 
-| リポジトリ | マージするブランチ | PR |
+| リポジトリ | commit | 含まれる PR |
 |---|---|---|
-| MaineK00n/vuls-data-update | `feat-extract-apple` + `MaineK00n/openssh-security` | #917 / #928 |
-| future-architect/vuls | `MaineK00n/apple-security-releases` + `MaineK00n/openssh-security` | #2635 / #2636 |
-
-どちらのマージも衝突は「両方採る」で解決できるが、Apple 側の `case` 本体が衝突境界で
-途中まで取り込まれるので、次の 2 箇所だけ手当てが要る。
-
-- vuls-data-update `range.go` の `CompareVersions`: Apple の `case` に
-  `return va.Compare(vb), nil` を戻す
-- vuls `detector/vuls2/vendor.go` の参照リンク: Apple の `case` に
-  `RefID: da.AdvisoryID,` と閉じ括弧を戻す
+| MaineK00n/vuls-data-update | `a1fb26a2`（nightly） | #917 / #939 / #940 / #928 / #941 |
+| future-architect/vuls | `386ec577`（master） | #2635 / #2636 |
 
 ```sh
-# vuls-data-update
-git switch -c integration origin/feat-extract-apple
-git merge origin/MaineK00n/openssh-security   # range.go を解決
-
-# vuls
-git switch -c integration origin/MaineK00n/apple-security-releases
-git merge origin/MaineK00n/openssh-security   # models 2 ファイルと detector 2 ファイルを解決
-go mod edit -replace github.com/MaineK00n/vuls-data-update=<上の integration のパス>
+git -C vuls switch --detach 386ec57759dd
 CGO_ENABLED=0 GOEXPERIMENT=jsonv2 go build -trimpath -ldflags "-s -w" -o vuls ./cmd/vuls
 ```
 
-4 本の PR がすべて上流にマージされれば、この手順は「マージ済みコミットを checkout して
-`make build`」に単純化できる。
+同梱の `data/vuls.zst` は、この 2 つが上流にマージされる前に同じ内容のブランチを
+マージしてビルドしたものである。
 
 ## ファイル
 

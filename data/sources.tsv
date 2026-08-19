@@ -13,7 +13,7 @@
 #   extract ... kind=raw のときの `vuls-data-update extract <extract>` サブコマンド名
 #
 #dbs	kind	tag	commit	extract
-fortinet	extracted	vuls-data-extracted-fortinet-cvrf	b91580470fc88fd3b79539ecd89fb71e610425c7	-
+fortinet	raw	vuls-data-raw-fortinet-cvrf	41b12c74848c6ab6258b9539b62f5996f82412c8	fortinet-cvrf
 fortinet	extracted	vuls-data-extracted-fortinet-csaf	7b932f6ef1149da06004d769e61d9c759cb1720d	-
 microsoft	extracted	vuls-data-extracted-microsoft-bulletin	f9aa5f07559603077ef7d31a6f023340d40c7be4	-
 microsoft	extracted	vuls-data-extracted-microsoft-cvrf	4e44ae4c773238306d5f3941a381d344a8062f6c	-
