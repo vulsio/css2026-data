@@ -14,7 +14,7 @@ NVD\cite{nist-nvd}においてこの役割を担うのが，\texttt{configuratio
 近年，CVEの報告件数は急増している．
 我々の観測では2026年は7月29日までの210日間で44,809件（取下げを除く）が公開され，年率換算で約7.8万件，2023年の28,817件の約2.7倍である．
 この増加が解析体制を圧迫していることは，NVDが \texttt{Deferred} というステータスの運用を始めたこと\cite{nvd-status}に表れている．これは遅延ではなくNVDがエンリッチメントを行わないと明示した状態である．
-またこの遅延を受け，VulnCheckは独自の解析を加えたVulnCheck NVD++\cite{vulncheck-nvd2}の提供を開始した．NVD由来の \texttt{configurations} を保持したまま独自の結果を \texttt{vcConfigurations} と \texttt{vcVulnerableCPEs} に持つため，両者の寄与を機械的に切り分けられる．
+またこの遅延を受け，VulnCheckは独自の解析を加えたVulnCheck NVD++\cite{vulncheck-nvd2}の提供を開始した．NVD由来の \texttt{configurations} を保持したまま，独自の結果を \texttt{vcConfigurations} と \texttt{vcVulnerableCPEs} に格納するため，両者の寄与を機械的に切り分けられる．
 
 検知ツールの提供者にとってこれは，「これまで信頼して使えていたデータソースを今後も同じ前提で使えるのか」という運用上の問題である．
 しかし我々の知る限り，CVE増加後のNVDおよび商用エンリッチメントについて，検知条件の供給という観点から定量的に整理した報告はない．
