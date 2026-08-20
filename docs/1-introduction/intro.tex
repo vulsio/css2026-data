@@ -14,11 +14,11 @@ NVD\cite{nist-nvd}においてこの役割を担うのが，\texttt{configuratio
 近年，CVEの報告件数は急増している．
 我々の観測では2026年は7月29日までの210日間で44,809件（取下げを除く）が公開され，年率換算で約7.8万件，2023年の28,817件の約2.7倍である．
 この増加が解析体制を圧迫していることは，NVDが \texttt{Deferred} というステータスの運用を始めたこと\cite{nvd-status}に表れている．これは遅延ではなくNVDがエンリッチメントを行わないと明示した状態である．
-またこの遅延を受け，VulnCheckは独自の解析を加えたVulnCheck NVD++\cite{vulncheck-nvd2}の提供を開始した．NVD由来の \texttt{configurations} を保持したまま，独自の結果を \texttt{vcConfigurations} と \texttt{vcVulnerableCPEs} に格納するため，両者の寄与を機械的に切り分けられる．
+またこの遅延を受け，VulnCheckは独自の解析を加えたVulnCheck \nvdpp\cite{vulncheck-nvd2}の提供を開始した．NVD由来の \texttt{configurations} を保持したまま，独自の結果を \texttt{vcConfigurations} と \texttt{vcVulnerableCPEs} に格納するため，両者の寄与を機械的に切り分けられる．
 
 検知ツールの提供者にとってこれは，「これまで信頼して使えていたデータソースを今後も同じ前提で使えるのか」という運用上の問題である．
-しかし我々の知る限り，CVE増加後のNVDおよび商用エンリッチメントについて，検知条件の供給という観点から定量的に整理した報告はない．
+しかし我々の知る限り，CVE増加後のNVDとVulnCheckについて，検知条件の供給という観点から定量的に整理した報告はない．
 
-そこで本稿は，NVDとVulnCheck NVD++の全件（2026年7月29日時点，取下げを除く353,704件）についてCPE適用条件の付与率・粒度・付与遅延・その後の安定性を測り，さらに一次データソースと突き合わせる4つの観点を定義してFortinetとCiscoで実測する（\ref{sec:supply}章）．
+そこで本稿は，NVDとVulnCheck \nvdpp の全件（2026年7月29日時点，取下げを除く353,704件）についてCPE適用条件の付与率・粒度・付与遅延・その後の安定性を測り，さらに一次データソースと突き合わせる4つの観点を定義してFortinetとCiscoで実測する（\ref{sec:supply}章）．
 そのうえで，LLMの非決定性を日々のデータ経路から追い出したまま一次データソースを構造化する3つの適用パターンを整理して実装し（\ref{sec:llm}章），入力データソースのみを変えた4種のデータベースで計10環境を検知して，上記の差が検知結果に現れることを確認する（\ref{sec:eval}章）．
 NVDのみでの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの76.4\%まで開き，\ref{sec:supply}章で測った付与率はこの差をほとんど予測しない．

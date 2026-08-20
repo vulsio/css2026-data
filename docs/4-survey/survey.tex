@@ -6,8 +6,8 @@
 \subsection{調査対象と方法}
 \label{sec:method3}
 
-全件調査の対象は，我々のデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck NVD++ (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショットである．
-両者のCVE ID集合を比べると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件で，VulnCheck NVD++ の収録IDはNVDのID空間を超えない．
+全件調査の対象は，我々のデータ収集基盤が取得したNVD JSON 2.0 データフィード\cite{nvd-feed}（371,416件）とVulnCheck \nvdpp{} (\texttt{nist-nvd2}) API\cite{vulncheck-nvd2}（371,393件）の，2026年7月29日時点のスナップショットである．
+両者のCVE ID集合を比べると，NVDのみに存在するものが23件，VulnCheckのみに存在するものが0件で，VulnCheck \nvdpp{} の収録IDはNVDのID空間を超えない．
 集計では \texttt{vulnStatus} が \texttt{Rejected} の17,712件を除外し353,704件を対象とし，各エントリの \texttt{configurations}（NVD）と \texttt{vcConfigurations}（VulnCheck独自）から \texttt{vulnerable: true} の \texttt{cpeMatch} の個数とバージョン指定の種別を数えた\footnote{取下げエントリは製品情報を持たないことが正常であり，含めると付与率を不当に低く見せる．実例として，Fortinet採番のCVEには2025年に一括取下げされたものが866件含まれ，除外しない場合Fortinetの付与率は32.8\%，除外後は99.6\%と算出される．}．
 
 一次データソースとの比較には次の4基準を定める．
@@ -44,7 +44,6 @@ C4はGit履歴から測る．スナップショットを1日2回取得しGitで�
 
 \paragraph{(2) 2024年を境に急落し，待っても解消しない．}
 \texttt{configurations} に \texttt{vulnerable} な \texttt{cpeMatch} を1つ以上持つ割合は2024年80.5\%，2025年62.6\%，2026年56.1\%と低下し，低下分はほぼそのまま \texttt{Deferred} の増加（19.5\%，37.3\%，34.8\%）で説明される（2026年は別途9.3\%が解析待ちである）．
-2025年公開分は，公開から平均350日が経過してなお37.3\%が \texttt{Deferred} のままである．
 未付与エントリの滞留も長く，\texttt{Awaiting Analysis} で中位数43日，\texttt{Deferred} の41,363件は中位数286日が経過している．
 2025年以降のNVDは4割弱が将来にわたって供給されず，新規公開のCVEも公開後1〜4か月は検知条件が存在しない前提で設計する必要がある．
 
@@ -75,14 +74,14 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
   \ecaption{Agreement with the Fortinet primary source (boundary-value method; each cell is NVD / VulnCheck).}
   \label{tab:match}
   \begin{center}
-  \begin{tabular}{llrrrrrr}
+  \begin{tabular}{ll r@{\,/\,}l r@{\,/\,}l r@{\,/\,}l r@{\,/\,}l r@{\,/\,}l r@{\,/\,}l}
     \hline
-    基準 & 採番元 & 一致 & C2 製品欠落 & C3a 未検知 & C3b 過剰検知 & 未検知率 & 過剰検知率 \\
+    基準 & 採番元 & \multicolumn{2}{c}{一致} & \multicolumn{2}{c}{C2 製品欠落} & \multicolumn{2}{c}{C3a 未検知} & \multicolumn{2}{c}{C3b 過剰検知} & \multicolumn{2}{c}{未検知率} & \multicolumn{2}{c}{過剰検知率} \\
     \hline
-    CVRF & Fortinet & 63.1 / 74.5 & 18.7 / 11.3 & 17.9 / 13.4 & 0.2 / 0.4 & 16.9 / 9.5 & 0.0 / 0.0 \\
-    CVRF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 99.7 / 99.7 & 0.0 / 0.0 \\
-    CSAF & Fortinet & 71.1 / \textbf{89.9} & 15.8 / \textbf{0.0} & 9.4 / 6.4 & 3.7 / 3.7 & 10.8 / \textbf{1.5} & 0.5 / 0.5 \\
-    CSAF & 他者 & 0.0 / 0.0 & \textbf{100.0 / 100.0} & 0.0 / 0.0 & 0.0 / 0.0 & 59.2 / 59.2 & 0.0 / 0.0 \\
+    CVRF & Fortinet & 63.1 & 74.5 & 18.7 & 11.3 & 17.9 & 13.4 & 0.2 & 0.4 & 16.9 & 9.5 & 0.0 & 0.0 \\
+    CVRF & 他者 & 0.0 & 0.0 & 100.0 & 100.0 & 0.0 & 0.0 & 0.0 & 0.0 & 99.7 & 99.7 & 0.0 & 0.0 \\
+    CSAF & Fortinet & 71.1 & 89.9 & 15.8 & 0.0 & 9.4 & 6.4 & 3.7 & 3.7 & 10.8 & 1.5 & 0.5 & 0.5 \\
+    CSAF & 他者 & 0.0 & 0.0 & 100.0 & 100.0 & 0.0 & 0.0 & 0.0 & 0.0 & 59.2 & 59.2 & 0.0 & 0.0 \\
     \hline
   \end{tabular}
   \end{center}
@@ -93,16 +92,16 @@ C2・C3の結果を表\ref{tab:match}に示す．対象は，CVRFがFortinet採�
 
 \paragraph{(1) 組込み部品の脆弱性では，NVDもVulnCheckもFortinet製品を1件も列挙しない．}
 他者が採番したCVEについてC2は100.0\%である（CVRFで54 CVE・255組，CSAFで6 CVE・60組）．
-その99〜100\%はCPEは付与されているがFortinet製品のCPEが1件も含まれないケースで，CVE-2024-6387（regreSSHion）やCVE-2023-48795（Terrapin）が該当する．
+そのほぼ全て（CVRFで252組，CSAFで60組）はCPEは付与されているがFortinet製品のCPEが1件も含まれないケースで，CVE-2024-6387（regreSSHion）やCVE-2023-48795（Terrapin）が該当する．
 Fortinetは自社製品が影響を受けることをアドバイザリで公表しているが，NVDのCPEには部品そのものの製品（\texttt{openbsd:openssh} 等）しか並ばない．
 OSS部品を組み込んだ製品を検知しようとすると，この欠落がそのまま未検知になる．
 \ref{sec:year}節の付与率にはこの欠落は一切現れない．
-VulnCheckも同じく100.0\%であり，商用エンリッチメントもこの欠落を埋めていない．
+VulnCheckの独自エンリッチメント（\texttt{vcConfigurations}）も同じく100.0\%であり，この欠落は埋まらない．
 \ref{sec:p1}節の補完表を適用すると2021年以前も測定でき，他者採番のCVEは54件・255組から241件・1,084組に増えるが，C2は95.4\%と高いままである．
 
 \paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%にとどまる．}
 \ref{sec:grain}節でFortinetの付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
-C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{target\_sw} で区別するため一致しない（212組中46組）．
+C2（18.7\%）の内訳は212組中210組が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{target\_sw} で区別するため一致しない（うち46組）．
 付与率は検知可能性の上限にすぎない．
 一方VulnCheckはCSAF基準・Fortinet採番で一致を71.1\%から89.9\%へ，C2を15.8\%から0.0\%へ，未検知率を10.8\%から1.5\%へ改善する．
 過剰検知はCSAF基準で負例1,075点中NVD・VulnCheckとも12点（1.1\%），CVRF基準で負例400点中NVD 4点・VulnCheck 7点であり，本測定の範囲では「VulnCheckが過剰検知を増やす」傾向は認められなかった（粗いCPEの影響は\ref{sec:eval}章で改めて測る）．
@@ -115,6 +114,6 @@ C2（18.7\%）の内訳は98〜99\%が「NVDにFortinet製品のCPEはあるが�
 全体では，NVDは中位数7日を要し42.6\%が執筆時点でも未付与であるのに対し，VulnCheckは中位数1日で未付与は22.6\%にとどまる．VulnCheckの価値は網羅性ではなく初動の速さにある．
 
 ベンダ間の差も大きい．アドバイザリ公開日を起点とすると，FortinetはNVDでも中位数3日・未付与1.1\%だが，Ciscoは中位数16日で48.3\%が未付与である（VulnCheckでも10.4\%が残る）．
-\ref{sec:grain}節の付与率もCisco 77.2\%，Fortinet 99.6\%であり，付与率の低いベンダでは欠落だけでなく遅延も深刻である．
+付与率の低いベンダでは欠落だけでなく遅延も深刻である．
 
 同じGit履歴から，付与された条件が維持されるかも見た．NVDの \texttt{configurations} は標本320件のいずれでも \texttt{part:vendor:product} の集合が変わらないのに対し，VulnCheckの独自フィールドは日単位で出入りする．CVE-2015-4000の \texttt{suse:suse\_linux\_enterprise\_server} は334版中309版で入れ替わり，こうしたCVEは推定約1万件（2.9\%）に及ぶ．昨日検知したものが翌日には検知されず，差分が新たな脆弱性か供給側の揺れかを区別できない．
