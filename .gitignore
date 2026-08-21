@@ -1,6 +1,6 @@
 ghcr.io/
 
-# LaTeX build artifacts
+# LaTeX の中間ファイル（PDF は成果物として commit する）
 docs/*.aux
 docs/*.bbl
 docs/*.blg
@@ -9,7 +9,6 @@ docs/*.fdb_latexmk
 docs/*.fls
 docs/*.log
 docs/*.out
-docs/*.pdf
 docs/*.synctex.gz
 docs/*.toc
 
@@ -17,13 +16,12 @@ docs/*.toc
 __pycache__/
 *.pyc
 
-# analysis intermediates (regenerate with extract.py)
+# analysis の中間ファイル（extract.py が生成する）
 data/analysis/*.csv
 
-# detect 用の vuls 設定は data/bin/detect.sh が生成する
+# 測定データは commit しない（README の「測定データは含めていない」を参照）
+data/db/
+data/*/results/
 data/*/config.*.toml
-
-# 検知に使う vuls v1 のバイナリ。commit してあるのは data/vuls.zst の方で、
-# 展開後の data/vuls は無視する（data/bin/unpack-db.sh が展開する）
 data/vuls
-!data/vuls.zst
+data/vuls.zst
