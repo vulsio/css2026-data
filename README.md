@@ -24,6 +24,35 @@ cd docs && latexmk css.tex
 | 4 | 一次データソースの構造化（LLMの3パターン） | vuls-data-update の各PR（原稿の参考文献を参照） |
 | 5 | 検知精度への影響の評価 | `data/bin/` の検知スクリプトと `data/analysis/detect_eval.py` `paper_numbers.py` |
 
+## 引用
+
+本稿の前稿を本文で引用しているのと同じ体裁（`docs/refs.bib` の `nakaoka2025`）に揃えてある。
+
+```bibtex
+@inproceedings{nakaoka2026,
+  author       = {中岡 典弘 and 篠原 俊一},
+  title        = {脆弱性検知条件の供給源の再検討 ---検知精度によるNVD・VulnCheck・一次データソースの比較とLLMによる構造化---},
+  booktitle    = {コンピュータセキュリティシンポジウム2026 (CSS2026) 論文集},
+  year         = {2026}
+}
+```
+
+英語で引くなら title を次に差し替える。
+
+> Revisiting the Supply of Vulnerability Detection Conditions:
+> Comparing NVD, VulnCheck and Primary Sources by Detection Accuracy, with LLM-assisted Structuring
+
+ページ番号は論文集の発行後に `pages` を足すこと。前稿は次のとおり。
+
+```bibtex
+@inproceedings{nakaoka2025,
+  author       = {中岡 典弘 and 篠原 俊一},
+  title        = {広範な脆弱性情報の統合管理と履歴追跡},
+  booktitle    = {コンピュータセキュリティシンポジウム2025 (CSS2025) 論文集},
+  year         = {2025}
+}
+```
+
 ## 測定データは含めていない
 
 次のものは容量が大きいため commit していない。
