@@ -116,4 +116,4 @@ C2（18.7\%）の内訳は212組中210組が「NVDにFortinet製品のCPEはあ�
 ベンダ間の差も大きい．アドバイザリ公開日を起点とすると，FortinetはNVDでも中位数3日・未付与1.1\%だが，Ciscoは中位数16日で48.3\%が未付与である（VulnCheckでも10.4\%が残る）．
 付与率の低いベンダでは欠落だけでなく遅延も深刻である．
 
-同じGit履歴から，付与された条件が維持されるかも見た．NVDの \texttt{configurations} は標本320件のいずれでも \texttt{part:vendor:product} の集合が変わらないのに対し，VulnCheckの独自フィールドは日単位で出入りする．CVE-2015-4000の \texttt{suse:suse\_linux\_enterprise\_server} は334版中309版で入れ替わり，こうしたCVEは推定約1万件（2.9\%）に及ぶ．昨日検知したものが翌日には検知されず，差分が新たな脆弱性か供給側の揺れかを区別できない．
+同じGit履歴から，付与された条件が維持されるかも見た．NVDの \texttt{configurations} は標本320件のいずれでも \texttt{part:vendor:product} の集合が変わらないのに対し，VulnCheckの独自フィールドでは製品そのものが出入りする．CVE-2015-4000の \texttt{suse:suse\_linux\_enterprise\_server} は，更新のあった334回のスナップショットのうち305回で有無が入れ替わる．3回以上入れ替わるCVEは推定約1万件（2.9\%）に及ぶ．昨日の検知結果が翌日には消え，差分が新たな脆弱性か供給側の揺れかを区別できない．
