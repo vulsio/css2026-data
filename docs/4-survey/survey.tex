@@ -23,7 +23,7 @@
 \end{list}
 
 一次データソースには，FortinetのPSIRT Advisory（CVRFおよびCSAF\cite{vuls-data-raw-fortinet}）とCiscoのopenVuln API由来のJSON\cite{vuls-data-raw-cisco-json}を用いる．
-CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，影響を受けない版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．そこでこの注記を解析して負例を作った（122件から511組，影響版と矛盾するものは0件）．CSAFは影響を受けない版を \texttt{known\_not\_affected} で機械可読に与える（Fortinetは \texttt{fixed} を用いない）．Fortinetは2024年に注記の記入をやめCSAFの公開を始めており，両者は期間を分担する．製品情報を伴うCVRFは616件，CSAFは173件である．
+CVRFの \texttt{product\_statuses} は \texttt{Known Affected} しか持たず，影響を受けない版は「\texttt{Please upgrade to FortiADC version 7.2.1 or above}」のように \texttt{Solutions} 注記の自然文としてしか書かれない．そこでこの注記を解析して負例を作った（122件から511組，影響版と矛盾するものは0件）．CSAFは影響を受けない版を \texttt{known\_not\_affected} で機械可読に与える（Fortinetは \texttt{fixed} を用いない）．Fortinetは2024年に注記の記入をやめCSAFの公開を始めており，両者は期間を分担する．製品情報を伴うCVRFは2022年以降の616件，CSAFは173件である．
 Ciscoは \texttt{productNames} に「Cisco IOS XE Software 16.12.1」のような自然文で製品を列挙し，CPEを持たないため，製品名からCPEへの対応付けを別途実装した．しかし，対応付けられるのはアドバイザリ単位では31.9\%にとどまる．そこでCiscoはC1とC4のみ測定し，C2・C3に相当する比較は\ref{sec:eval}章の検知結果として示す．
 
 C2・C3の判定には\textbf{境界値法}を用いる．
@@ -99,7 +99,7 @@ OSS部品を組み込んだ製品を検知しようとすると，この欠落�
 VulnCheckの独自エンリッチメント（\texttt{vcConfigurations}）も同じく100.0\%であり，この欠落は埋まらない．
 \ref{sec:p1}節の補完表を適用すると2021年以前も測定でき，他者採番のCVEは54件・255組から241件・1,084組に増えるが，C2は95.4\%と高いままである．
 
-\paragraph{(2) Fortinetが採番したCVEでも一致は63.3\%にとどまる．}
+\paragraph{(2) Fortinetが採番したCVEでも一致は63.1\%にとどまる．}
 \ref{sec:grain}節でFortinetの付与率は99.6\%と最良の水準であったが，内容の一致はそこまで高くない．
 C2（18.7\%）の内訳は212組中210組が「NVDにFortinet製品のCPEはあるが，当該製品のCPEが無い」ケースで，製品の切り方の違いも含む．FortiClient Windows/Mac/LinuxをFortinetは別製品として数えるのに対し，NVDは \texttt{target\_sw} で区別するため一致しない（うち46組）．
 付与率は検知可能性の上限にすぎない．
