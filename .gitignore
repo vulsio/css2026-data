@@ -1,5 +1,3 @@
-ghcr.io/
-
 # LaTeX の中間ファイル（PDF は成果物として commit する）
 docs/*.aux
 docs/*.bbl
@@ -12,16 +10,8 @@ docs/*.out
 docs/*.synctex.gz
 docs/*.toc
 
-# Python
-__pycache__/
-*.pyc
+# 手元の測定データと集計スクリプト（このリポジトリには含めない）
+data/
 
-# analysis の中間ファイル（extract.py が生成する）
-data/analysis/*.csv
-
-# 測定データは commit しない（README の「測定データは含めていない」を参照）
-data/db/
-data/*/results/
-data/*/config.*.toml
-data/vuls
-data/vuls.zst
+# スライドの作業ファイル（PDF だけを docs/ に置く）
+slides/
