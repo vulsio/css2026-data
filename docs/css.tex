@@ -1,0 +1,110 @@
+\documentclass{css}
+%\documentclass[english]{css}
+
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{latexsym}
+\usepackage{listings}
+\usepackage{url}
+\urlstyle{same}
+
+\def\|{\verb|}
+
+%% 本文中の + は数式記号フォント (cmr) から取られ左右のサイドベアリングが広いため，
+%% 「NVD++」の 2 つの + が離れて見える。字間を詰める。
+\newcommand{\nvdpp}{NVD+\kern-0.07em+}
+
+\newcommand{\cssyear}[0]{2026}
+\newcommand{\cssname}[0]{CSS 2026}
+\newcommand{\cssversion}[0]{2026/06/01}
+\newcommand{\cssemail}[0]{css2026-office@iwsec.org}
+
+\makeatletter
+\newcommand\newblock{\hskip .11em\@plus.33em\@minus.07em}
+\makeatother
+
+%% ipsj.cls は \paragraph を level 3 で定義しており（secnumdepth も 3），
+%% \theparagraph が \thesubsubsection.<n> なので，\subsubsection を使わない
+%% 本稿では「7.2.0.1」のような番号が付く。段落見出しは本文側で (1) (2) と
+%% 振っているため，level 3 以下には番号を付けない。
+\setcounter{secnumdepth}{2}
+
+%% 脚注が段をまたいで分断されるのを防ぐ。既定では同一脚注の途中で段が
+%% 変わり得るが，続きの側には脚注番号が付かないため読者が追えない。
+\interfootnotelinepenalty=10000
+
+%% 段抜きフロート（table*）が単独でページを占有するのを防ぐ。
+%% 既定の \dblfloatpagefraction=0.5 では，ページの半分を超える表が
+%% フロート専用ページへ送られ，本文が入らなくなる。
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.8}
+
+\begin{document}
+
+%% 本文が和文の場合，タイトル・著者名・著者所属・概要は，和文・英文共に必須．
+
+\title{脆弱性検知条件の供給源の再検討 \\ ---検知精度によるNVD・VulnCheck・一次データソースの比較とLLMによる構造化---}
+\etitle{Revisiting the Supply of Vulnerability Detection Conditions: Comparing NVD, VulnCheck and Primary Sources by Detection Accuracy, with LLM-assisted Structuring}
+
+\affiliate{FUTURE}{フューチャー株式会社\\
+Future Corporation}
+
+%% メールアドレスは省略可能だが，代表者のメールアドレスは必須．
+%% 姓名の間は半角スペースを入れること．
+
+\author{中岡 典弘}{Norihiro Nakaoka}{FUTURE}[n.nakaoka.46@future.co.jp]
+\author{篠原 俊一}{Shunichi Shinohara}{FUTURE}[s.shinohara.yx@future.co.jp]
+
+\begin{abstract}
+我々はOSS脆弱性スキャナVulsと脆弱性DBを運用している．
+CVE急増を受け，検知に不可欠な「どの製品のどの版が影響を受けるか」の供給源を調べた．
+NVD・VulnCheck \nvdpp の全件（取下げ除き353,704件）では，NVDのCPE付与率が2023年以前の100\%から2026年56.1\%へ低下し，2025年分の37.3\%はNVD自身が解析対象外と明示していた．
+ただし付与率は検知精度を予測しない．
+データソースのみを変えたDBで10環境を検知すると，NVDのみの未検知率はWindows Server 2022の1.3\%からサポート終了版FortiOSの76.4\%まで開き，その93.8\%は組込みOSS部品であった．
+macOSでは下限のないCPEにより過剰検知が81.5\%に達した．
+VulnCheckはMicrosoft Edgeの未検知を96.2\%から0.4\%へ下げる一方，Windowsでは過剰検知率70.6\%を生み，独自CPEは日単位で入れ替わる．
+一次データソースが常に優るとは限らず，供給源の選択は製品ごとに異なる．
+本稿はその判断に要る測定と，一次データソースのLLM構造化方式を示す．
+\end{abstract}
+
+%% キーワード (1--5単語) の記載は任意．
+
+\begin{jkeyword}
+脆弱性検知，脆弱性データベース，NVD，一次データソース，LLM
+\end{jkeyword}
+
+\begin{eabstract}
+We develop Vuls, an open-source vulnerability scanner, and its database.
+Given the CVE surge, we ask where a scanner should get its detection conditions.
+Across all 353,704 non-rejected entries, NVD's CPE coverage fell from 100\% through 2023 to 56.1\% in 2026, with 37.3\% of 2025 entries marked Deferred.
+Coverage, however, does not predict accuracy.
+Across ten environments differing only in input source, NVD's miss rate ranges from 1.3\% on Windows Server 2022 to 76.4\% on an end-of-life FortiOS, 93.8\% of the latter embedded OSS components.
+How it errs differs too: on macOS, CPEs unbounded below drive an 81.5\% false-positive rate.
+VulnCheck cuts Microsoft Edge's miss rate from 96.2\% to 0.4\%, yields 70.6\% false positives on Windows, and rewrites its own CPEs daily.
+Nor is the primary source always better; the choice differs by product.
+We report the measurements that decision needs and a reproducible LLM-assisted method for structuring primary sources.
+\end{eabstract}
+
+%% the following keyword part is optional and can be omitted.
+
+\begin{ekeyword}
+Vulnerability Detection, Vulnerability Database, NVD, Primary Data Source, Large Language Model
+\end{ekeyword}
+
+\maketitle
+
+\input{./1-introduction/intro.tex}
+\input{./3-related/related.tex}
+\input{./4-survey/survey.tex}
+\input{./6-method/method.tex}
+\input{./7-evaluation/evaluation.tex}
+\input{./9-conclusion/conclusion.tex}
+
+\bibliographystyle{junsrt}
+\bibliography{./refs.bib}
+
+\end{document}

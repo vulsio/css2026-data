@@ -1,0 +1,17 @@
+# LaTeX の中間ファイル（PDF は成果物として commit する）
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.dvi
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.log
+docs/*.out
+docs/*.synctex.gz
+docs/*.toc
+
+# 手元の測定データと集計スクリプト（このリポジトリには含めない）
+data/
+
+# スライドの作業ファイル（PDF だけを docs/ に置く）
+slides/
